@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json
+          employee_id: string | null
+          employee_name: string | null
+          entity: string | null
+          entity_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json
+          employee_id?: string | null
+          employee_name?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json
+          employee_id?: string | null
+          employee_name?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_operations: {
+        Row: {
+          amount: number
+          created_at: string
+          employee_id: string | null
+          id: string
+          reason: string | null
+          shift_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          reason?: string | null
+          shift_id?: string | null
+          type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          reason?: string | null
+          shift_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_operations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_operations_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string
@@ -38,29 +124,104 @@ export type Database = {
         }
         Relationships: []
       }
-      employees: {
+      customers: {
+        Row: {
+          bonus: number
+          created_at: string
+          id: string
+          name: string
+          note: string | null
+          phone: string
+          total_spent: number
+          updated_at: string
+          visits: number
+        }
+        Insert: {
+          bonus?: number
+          created_at?: string
+          id?: string
+          name?: string
+          note?: string | null
+          phone: string
+          total_spent?: number
+          updated_at?: string
+          visits?: number
+        }
+        Update: {
+          bonus?: number
+          created_at?: string
+          id?: string
+          name?: string
+          note?: string | null
+          phone?: string
+          total_spent?: number
+          updated_at?: string
+          visits?: number
+        }
+        Relationships: []
+      }
+      discounts: {
         Row: {
           created_at: string
           id: string
           is_active: boolean
+          kind: string
           name: string
-          pin: string
-          role: Database["public"]["Enums"]["app_role"]
+          value: number
         }
         Insert: {
           created_at?: string
           id?: string
           is_active?: boolean
+          kind?: string
           name: string
-          pin: string
-          role?: Database["public"]["Enums"]["app_role"]
+          value?: number
         }
         Update: {
           created_at?: string
           id?: string
           is_active?: boolean
+          kind?: string
           name?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      employees: {
+        Row: {
+          created_at: string
+          hired_at: string | null
+          id: string
+          is_active: boolean
+          locked_until: string | null
+          name: string
+          phone: string | null
+          pin: string
+          pin_attempts: number
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          hired_at?: string | null
+          id?: string
+          is_active?: boolean
+          locked_until?: string | null
+          name: string
+          phone?: string | null
+          pin: string
+          pin_attempts?: number
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          hired_at?: string | null
+          id?: string
+          is_active?: boolean
+          locked_until?: string | null
+          name?: string
+          phone?: string | null
           pin?: string
+          pin_attempts?: number
           role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
@@ -150,12 +311,22 @@ export type Database = {
       }
       orders: {
         Row: {
+          bonus_earned: number
+          bonus_used: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           card_amount: number
           cash_amount: number
           cash_received: number
           change_given: number
+          completed_at: string | null
           created_at: string
           created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          daily_no: number | null
           discount: number
           employee_id: string | null
           fiscal_check_url: string | null
@@ -166,6 +337,7 @@ export type Database = {
           kaspi_txn_id: string | null
           note: string | null
           order_no: number
+          order_type: string
           payment_method: string
           shift_id: string | null
           status: string
@@ -173,12 +345,22 @@ export type Database = {
           total: number
         }
         Insert: {
+          bonus_earned?: number
+          bonus_used?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           card_amount?: number
           cash_amount?: number
           cash_received?: number
           change_given?: number
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          daily_no?: number | null
           discount?: number
           employee_id?: string | null
           fiscal_check_url?: string | null
@@ -189,6 +371,7 @@ export type Database = {
           kaspi_txn_id?: string | null
           note?: string | null
           order_no?: never
+          order_type?: string
           payment_method?: string
           shift_id?: string | null
           status?: string
@@ -196,12 +379,22 @@ export type Database = {
           total?: number
         }
         Update: {
+          bonus_earned?: number
+          bonus_used?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           card_amount?: number
           cash_amount?: number
           cash_received?: number
           change_given?: number
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          daily_no?: number | null
           discount?: number
           employee_id?: string | null
           fiscal_check_url?: string | null
@@ -212,6 +405,7 @@ export type Database = {
           kaspi_txn_id?: string | null
           note?: string | null
           order_no?: never
+          order_type?: string
           payment_method?: string
           shift_id?: string | null
           status?: string
@@ -301,14 +495,20 @@ export type Database = {
         Row: {
           address: string
           auto_print: boolean
+          bonus_percent: number
           id: boolean
           kaspi_api_url: string
           kaspi_bin: string
           kaspi_enabled: boolean
           kaspi_terminal_id: string
+          low_stock_threshold: number
+          order_prefix: string
           phone: string
+          print_cashier_receipt: boolean
           print_copies: number
+          print_customer_receipt: boolean
           receipt_footer: string
+          shift_max_hours: number
           shop_name: string
           updated_at: string
           vat_percent: number
@@ -316,14 +516,20 @@ export type Database = {
         Insert: {
           address?: string
           auto_print?: boolean
+          bonus_percent?: number
           id?: boolean
           kaspi_api_url?: string
           kaspi_bin?: string
           kaspi_enabled?: boolean
           kaspi_terminal_id?: string
+          low_stock_threshold?: number
+          order_prefix?: string
           phone?: string
+          print_cashier_receipt?: boolean
           print_copies?: number
+          print_customer_receipt?: boolean
           receipt_footer?: string
+          shift_max_hours?: number
           shop_name?: string
           updated_at?: string
           vat_percent?: number
@@ -331,14 +537,20 @@ export type Database = {
         Update: {
           address?: string
           auto_print?: boolean
+          bonus_percent?: number
           id?: boolean
           kaspi_api_url?: string
           kaspi_bin?: string
           kaspi_enabled?: boolean
           kaspi_terminal_id?: string
+          low_stock_threshold?: number
+          order_prefix?: string
           phone?: string
+          print_cashier_receipt?: boolean
           print_copies?: number
+          print_customer_receipt?: boolean
           receipt_footer?: string
+          shift_max_hours?: number
           shop_name?: string
           updated_at?: string
           vat_percent?: number
@@ -347,36 +559,51 @@ export type Database = {
       }
       shifts: {
         Row: {
+          auto_closed: boolean
+          cash_diff: number | null
           cash_end: number | null
           cash_start: number
           closed_at: string | null
           employee_id: string | null
+          expected_cash: number | null
           id: string
           note: string | null
           opened_at: string
           opened_by: string | null
+          orders_count: number
+          sales_total: number
           status: string
         }
         Insert: {
+          auto_closed?: boolean
+          cash_diff?: number | null
           cash_end?: number | null
           cash_start?: number
           closed_at?: string | null
           employee_id?: string | null
+          expected_cash?: number | null
           id?: string
           note?: string | null
           opened_at?: string
           opened_by?: string | null
+          orders_count?: number
+          sales_total?: number
           status?: string
         }
         Update: {
+          auto_closed?: boolean
+          cash_diff?: number | null
           cash_end?: number | null
           cash_start?: number
           closed_at?: string | null
           employee_id?: string | null
+          expected_cash?: number | null
           id?: string
           note?: string | null
           opened_at?: string
           opened_by?: string | null
+          orders_count?: number
+          sales_total?: number
           status?: string
         }
         Relationships: [
@@ -453,6 +680,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      close_expired_shifts: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
