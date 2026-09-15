@@ -1,0 +1,1 @@
+revoke execute on function public.close_expired_shifts() from authenticated;
