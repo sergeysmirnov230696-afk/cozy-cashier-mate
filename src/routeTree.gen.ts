@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DisplayRouteImport } from './routes/display'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
+import { Route as CashierLoginRouteImport } from './routes/cashier.login'
+import { Route as CashierShiftRouteImport } from './routes/cashier.shift'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin/employees'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
@@ -35,6 +38,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DisplayRoute = DisplayRouteImport.update({
+  id: '/display',
+  path: '/display',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -44,6 +52,16 @@ const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const CashierLoginRoute = CashierLoginRouteImport.update({
+  id: '/cashier/login',
+  path: '/cashier/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashierShiftRoute = CashierShiftRouteImport.update({
+  id: '/cashier/shift',
+  path: '/cashier/shift',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
@@ -83,8 +101,11 @@ const AuthenticatedAdminStockRoute = AuthenticatedAdminStockRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/display': typeof DisplayRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/pos': typeof AuthenticatedPosRoute
+  '/cashier/login': typeof CashierLoginRoute
+  '/cashier/shift': typeof CashierShiftRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
@@ -95,7 +116,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/display': typeof DisplayRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/cashier/login': typeof CashierLoginRoute
+  '/cashier/shift': typeof CashierShiftRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
@@ -108,8 +132,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/display': typeof DisplayRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/cashier/login': typeof CashierLoginRoute
+  '/cashier/shift': typeof CashierShiftRoute
   '/_authenticated/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
@@ -122,8 +149,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/display'
     | '/admin'
     | '/pos'
+    | '/cashier/login'
+    | '/cashier/shift'
     | '/admin/employees'
     | '/admin/orders'
     | '/admin/products'
@@ -134,7 +164,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/display'
     | '/pos'
+    | '/cashier/login'
+    | '/cashier/shift'
     | '/admin/employees'
     | '/admin/orders'
     | '/admin/products'
@@ -146,8 +179,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/display'
     | '/_authenticated/admin'
     | '/_authenticated/pos'
+    | '/cashier/login'
+    | '/cashier/shift'
     | '/_authenticated/admin/employees'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/products'
@@ -160,6 +196,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DisplayRoute: typeof DisplayRoute
+  CashierLoginRoute: typeof CashierLoginRoute
+  CashierShiftRoute: typeof CashierShiftRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -185,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/display': {
+      id: '/display'
+      path: '/display'
+      fullPath: '/display'
+      preLoaderRoute: typeof DisplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -198,6 +244,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/pos'
       preLoaderRoute: typeof AuthenticatedPosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/cashier/login': {
+      id: '/cashier/login'
+      path: '/cashier/login'
+      fullPath: '/cashier/login'
+      preLoaderRoute: typeof CashierLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cashier/shift': {
+      id: '/cashier/shift'
+      path: '/cashier/shift'
+      fullPath: '/cashier/shift'
+      preLoaderRoute: typeof CashierShiftRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -285,6 +345,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  DisplayRoute: DisplayRoute,
+  CashierLoginRoute: CashierLoginRoute,
+  CashierShiftRoute: CashierShiftRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
