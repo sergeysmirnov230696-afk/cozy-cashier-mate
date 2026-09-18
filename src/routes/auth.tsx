@@ -31,7 +31,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/pos", replace: true });
+      if (data.session) navigate({ to: "/cashier", replace: true });
     });
   }, [navigate]);
 
@@ -44,7 +44,7 @@ function AuthPage() {
       toast.error("Не удалось войти: " + error.message);
       return;
     }
-    navigate({ to: "/pos", replace: true });
+    navigate({ to: "/cashier", replace: true });
   }
 
   async function signUp(e: React.FormEvent) {
@@ -61,7 +61,7 @@ function AuthPage() {
       return;
     }
     if (data.session) {
-      navigate({ to: "/pos", replace: true });
+      navigate({ to: "/cashier", replace: true });
     } else {
       setSent(true);
       toast.success("Проверьте почту и подтвердите адрес");
@@ -79,7 +79,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/pos", replace: true });
+    navigate({ to: "/cashier", replace: true });
   }
 
   return (

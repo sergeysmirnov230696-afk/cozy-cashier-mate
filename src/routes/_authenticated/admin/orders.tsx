@@ -98,7 +98,7 @@ function OrdersPage() {
         cardAmount: order.card_amount,
         cashReceived: order.cash_received,
         change: order.change_given,
-        refunded: order.status === "refunded",
+        refunded: order.status === "refunded" || order.status === "cancelled",
       });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -199,10 +199,14 @@ function OrdersPage() {
                     <td className="p-3">{PAYMENT_LABELS[o.payment_method] ?? o.payment_method}</td>
                     <td className="p-3 text-right font-semibold">{formatKzt(o.total)}</td>
                     <td className="p-3">
-                      {o.status === "refunded" ? (
-                        <span className="text-destructive">Возврат</span>
+                      {o.status === "refunded" || o.status === "cancelled" ? (
+                        <span className="text-destructive">
+                          {o.status === "refunded" ? "Возврат" : "Отменён"}
+                        </span>
+                      ) : o.status === "open" ? (
+                        <span className="text-primary">Открыт</span>
                       ) : (
-                        <span className="text-secondary">Оплачен</span>
+                        <span className="text-secondary">Выполнен</span>
                       )}
                     </td>
                     <td className="p-3">
@@ -210,7 +214,7 @@ function OrdersPage() {
                         <Button size="sm" variant="secondary" onClick={() => openReceipt.mutate(o)}>
                           <Printer className="size-4" />
                         </Button>
-                        {o.status !== "refunded" && (
+                        {o.status !== "refunded" && o.status !== "cancelled" && (
                           <Button
                             size="sm"
                             variant="ghost"
@@ -318,8 +322,9 @@ function ShiftReportDialog({
     },
   });
 
-  const paid = (report.data ?? []).filter((o) => o.status === "paid");
-  const refunded = (report.data ?? []).filter((o) => o.status === "refunded");
+  const dead = ["refunded", "cancelled"];
+  const paid = (report.data ?? []).filter((o) => !dead.includes(o.status));
+  const refunded = (report.data ?? []).filter((o) => dead.includes(o.status));
   const cash = paid.reduce((s, o) => s + o.cash_amount, 0);
   const card = paid.reduce((s, o) => s + o.card_amount, 0);
   const revenue = paid.reduce((s, o) => s + o.total, 0);

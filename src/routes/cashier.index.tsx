@@ -143,8 +143,14 @@ function CashierPos() {
   }
 
   function onProductClick(p: Row) {
-    if (p["in_stop_list"]) return toast.error("Товар в стоп-листе");
-    if (p["track_stock"] && n(p["stock"]) <= 0) return toast.error("Нет на складе");
+    if (p["in_stop_list"]) {
+      toast.error("Товар в стоп-листе");
+      return;
+    }
+    if (p["track_stock"] && n(p["stock"]) <= 0) {
+      toast.error("Нет на складе");
+      return;
+    }
     const allowed = modifiers.filter((m) => !m["category_id"] || m["category_id"] === p["category_id"]);
     if (allowed.length > 0) {
       setModProduct(p);
@@ -190,14 +196,14 @@ function CashierPos() {
           cashReceived: method === "card" ? 0 : cashReceived,
           cardAmount: method === "mixed" ? cardAmount : method === "card" ? total : 0,
           orderType,
-          customerName: customer ? s(customer["name"]) : undefined,
-          customerPhone: phone || undefined,
-          note: note || undefined,
+          ...(customer && s(customer["name"]) ? { customerName: s(customer["name"]) } : {}),
+          ...(phone ? { customerPhone: phone } : {}),
+          ...(note ? { note } : {}),
           bonusUsed: bonus,
         },
       }),
     onSuccess: (res) => {
-      if (!res.ok) return toast.error(res.message);
+      if (!res.ok) { toast.error(res.message); return; }
       setReceipt(res.receipt);
       setPayOpen(false);
       resetCart();

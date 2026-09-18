@@ -74,7 +74,7 @@ function OrdersScreen() {
     mutationFn: (input: { orderId: string; status: OrderStatus; reason?: string }) =>
       changeStatus({ data: input }),
     onSuccess: (res) => {
-      if (!res.ok) return toast.error(res.message);
+      if (!res.ok) { toast.error(res.message); return; }
       setCancelId(null);
       setReason("");
       qc.invalidateQueries({ queryKey: ["cashier"] });
@@ -86,7 +86,7 @@ function OrdersScreen() {
   const printM = useMutation({
     mutationFn: (orderId: string) => reprint({ data: { orderId } }),
     onSuccess: (res) => {
-      if (!res) return toast.error("Заказ не найден");
+      if (!res) { toast.error("Заказ не найден"); return; }
       setReceipt(res);
       setTimeout(() => window.print(), 400);
     },

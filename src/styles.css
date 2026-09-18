@@ -180,10 +180,22 @@
     color: #000;
   }
   #receipt-print {
-    position: fixed;
-    inset: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
     background: #fff;
-    padding: 12px;
+    padding: 0;
     width: 80mm;
+  }
+  #receipt-print .receipt-print {
+    max-width: 80mm;
+    padding: 4mm;
+    border-radius: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+  #receipt-print .receipt-print:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 }
