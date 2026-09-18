@@ -19,6 +19,8 @@ import { Route as CashierLoginRouteImport } from './routes/cashier.login'
 import { Route as CashierOrdersRouteImport } from './routes/cashier.orders'
 import { Route as CashierShiftRouteImport } from './routes/cashier.shift'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
+import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated/admin/customers'
 import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin/employees'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
@@ -74,6 +76,17 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminCustomersRoute =
+  AuthenticatedAdminCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminEmployeesRoute =
   AuthenticatedAdminEmployeesRouteImport.update({
     id: '/employees',
@@ -113,6 +126,8 @@ export interface FileRoutesByFullPath {
   '/cashier/orders': typeof CashierOrdersRoute
   '/cashier/shift': typeof CashierShiftRoute
   '/cashier/': typeof CashierIndexRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
@@ -128,6 +143,8 @@ export interface FileRoutesByTo {
   '/cashier/orders': typeof CashierOrdersRoute
   '/cashier/shift': typeof CashierShiftRoute
   '/cashier': typeof CashierIndexRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
@@ -146,6 +163,8 @@ export interface FileRoutesById {
   '/cashier/orders': typeof CashierOrdersRoute
   '/cashier/shift': typeof CashierShiftRoute
   '/cashier/': typeof CashierIndexRoute
+  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
+  '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/_authenticated/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
@@ -164,6 +183,8 @@ export interface FileRouteTypes {
     | '/cashier/orders'
     | '/cashier/shift'
     | '/cashier/'
+    | '/admin/audit'
+    | '/admin/customers'
     | '/admin/employees'
     | '/admin/orders'
     | '/admin/products'
@@ -179,6 +200,8 @@ export interface FileRouteTypes {
     | '/cashier/orders'
     | '/cashier/shift'
     | '/cashier'
+    | '/admin/audit'
+    | '/admin/customers'
     | '/admin/employees'
     | '/admin/orders'
     | '/admin/products'
@@ -196,6 +219,8 @@ export interface FileRouteTypes {
     | '/cashier/orders'
     | '/cashier/shift'
     | '/cashier/'
+    | '/_authenticated/admin/audit'
+    | '/_authenticated/admin/customers'
     | '/_authenticated/admin/employees'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/products'
@@ -287,6 +312,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/audit': {
+      id: '/_authenticated/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/customers': {
+      id: '/_authenticated/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AuthenticatedAdminCustomersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/employees': {
       id: '/_authenticated/admin/employees'
       path: '/employees'
@@ -326,6 +365,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
+  AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
   AuthenticatedAdminEmployeesRoute: typeof AuthenticatedAdminEmployeesRoute
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
   AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
@@ -336,6 +377,8 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
+    AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
     AuthenticatedAdminEmployeesRoute: AuthenticatedAdminEmployeesRoute,
     AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
     AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
