@@ -1,5 +1,14 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { BarChart3, Boxes, LogOut, Package, Settings, ShoppingCart, Users } from "lucide-react";
+import {
+  BarChart3,
+  Boxes,
+  LogOut,
+  Package,
+  ScrollText,
+  Settings,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,7 +23,9 @@ const NAV = [
   { to: "/admin/products", label: "Товары", icon: Package },
   { to: "/admin/stock", label: "Склад", icon: Boxes },
   { to: "/admin/orders", label: "Чеки и смены", icon: ShoppingCart },
+  { to: "/admin/customers", label: "Клиенты", icon: Users },
   { to: "/admin/employees", label: "Сотрудники", icon: Users },
+  { to: "/admin/audit", label: "Журнал", icon: ScrollText },
   { to: "/admin/settings", label: "Настройки", icon: Settings },
 ] as const;
 
