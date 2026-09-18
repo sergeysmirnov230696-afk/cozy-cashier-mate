@@ -143,8 +143,14 @@ function CashierPos() {
   }
 
   function onProductClick(p: Row) {
-    if (p["in_stop_list"]) return toast.error("Товар в стоп-листе");
-    if (p["track_stock"] && n(p["stock"]) <= 0) return toast.error("Нет на складе");
+    if (p["in_stop_list"]) {
+      toast.error("Товар в стоп-листе");
+      return;
+    }
+    if (p["track_stock"] && n(p["stock"]) <= 0) {
+      toast.error("Нет на складе");
+      return;
+    }
     const allowed = modifiers.filter((m) => !m["category_id"] || m["category_id"] === p["category_id"]);
     if (allowed.length > 0) {
       setModProduct(p);
