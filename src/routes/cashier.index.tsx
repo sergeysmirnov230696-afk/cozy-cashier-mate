@@ -197,7 +197,7 @@ function CashierPos() {
         },
       }),
     onSuccess: (res) => {
-      if (!res.ok) return toast.error(res.message);
+      if (!res.ok) { toast.error(res.message); return; }
       setReceipt(res.receipt);
       setPayOpen(false);
       resetCart();

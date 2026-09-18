@@ -63,7 +63,7 @@ function ShiftScreen() {
   const openM = useMutation({
     mutationFn: () => open({ data: { cashStart: Number(cashStart.replace(/\s/g, "")) || 0 } }),
     onSuccess: (res) => {
-      if (!res.ok) return toast.error(res.message);
+      if (!res.ok) { toast.error(res.message); return; }
       setCashStart("");
       refresh();
       toast.success("Смена открыта");
@@ -74,7 +74,7 @@ function ShiftScreen() {
     mutationFn: () =>
       close({ data: { countedCash: Number(counted.replace(/\s/g, "")) || 0, note } }),
     onSuccess: (res) => {
-      if (!res.ok) return toast.error(res.message);
+      if (!res.ok) { toast.error(res.message); return; }
       setCounted("");
       setNote("");
       refresh();
@@ -92,7 +92,7 @@ function ShiftScreen() {
         data: { type, amount: Number(opAmount.replace(/\s/g, "")) || 0, reason: opReason },
       }),
     onSuccess: (res) => {
-      if (!res.ok) return toast.error(res.message);
+      if (!res.ok) { toast.error(res.message); return; }
       setOpAmount("");
       setOpReason("");
       refresh();
