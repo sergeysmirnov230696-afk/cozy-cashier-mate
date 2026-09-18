@@ -51,7 +51,7 @@ function AdminLayout() {
         </nav>
         <div className="ml-auto flex gap-2">
           <Button asChild size="sm" variant="secondary">
-            <Link to="/pos">Касса</Link>
+            <Link to="/cashier">Касса</Link>
           </Button>
           <Button size="sm" variant="ghost" onClick={signOut}>
             <LogOut className="size-4" />

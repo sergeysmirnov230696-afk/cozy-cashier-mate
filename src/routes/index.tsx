@@ -48,7 +48,7 @@ function Index() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           <Link
-            to="/pos"
+            to="/cashier"
             className="tile-press group rounded-2xl border border-border bg-card p-6 hover:border-primary"
           >
             <ShoppingCart className="size-7 text-primary" />
