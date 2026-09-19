@@ -132,11 +132,19 @@ export function CustomerReceipt({ r }: { r: ReceiptPayload }) {
 }
 
 /** Оба чека сразу: печатаются последовательно на одном принтере. */
-export function ReceiptPair({ r }: { r: ReceiptPayload }) {
+export function ReceiptPair({
+  r,
+  cashier = true,
+  customer = true,
+}: {
+  r: ReceiptPayload;
+  cashier?: boolean;
+  customer?: boolean;
+}) {
   return (
     <div className="print-area grid gap-4">
-      <CashierReceipt r={r} />
-      <CustomerReceipt r={r} />
+      {cashier ? <CashierReceipt r={r} /> : null}
+      {customer ? <CustomerReceipt r={r} /> : null}
     </div>
   );
 }

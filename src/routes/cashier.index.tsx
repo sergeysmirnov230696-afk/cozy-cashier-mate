@@ -213,13 +213,18 @@ function CashierPos() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  useAutoPrint(!!receipt, !!receipt && settings?.["print_customer_receipt"] !== false, 1);
+  const printCashier = settings?.["print_cashier_receipt"] !== false;
+  const printCustomer = settings?.["print_customer_receipt"] !== false;
+  const autoPrint = settings?.["auto_print"] !== false && (printCashier || printCustomer);
+  const printCopies = Math.min(3, Math.max(1, Number(settings?.["print_copies"] ?? 1) || 1));
+
+  useAutoPrint(!!receipt, !!receipt && autoPrint, printCopies);
 
   if (receipt) {
     return (
       <main className="min-h-screen bg-muted p-4">
         <div id="receipt-print">
-          <ReceiptPair r={receipt} />
+          <ReceiptPair r={receipt} cashier={printCashier} customer={printCustomer} />
         </div>
         <div className="mx-auto mt-4 flex max-w-sm gap-2 print:hidden">
           <Button className="flex-1" onClick={() => window.print()}>

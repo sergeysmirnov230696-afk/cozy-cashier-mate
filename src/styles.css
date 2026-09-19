@@ -179,18 +179,25 @@
     visibility: visible;
     color: #000;
   }
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
   #receipt-print {
     position: absolute;
     top: 0;
     left: 0;
     background: #fff;
     padding: 0;
-    width: 80mm;
+    width: 58mm;
   }
   #receipt-print .receipt-print {
-    max-width: 80mm;
-    padding: 4mm;
+    width: 58mm;
+    max-width: 58mm;
+    padding: 2mm;
     border-radius: 0;
+    font-size: 11px;
+    line-height: 1.35;
     break-after: page;
     page-break-after: always;
   }

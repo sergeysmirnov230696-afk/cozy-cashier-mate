@@ -38,6 +38,8 @@ function SettingsPage() {
     vat_percent: "0",
     auto_print: true,
     print_copies: "1",
+    print_cashier_receipt: true,
+    print_customer_receipt: true,
     kaspi_enabled: false,
     kaspi_api_url: "",
     kaspi_terminal_id: "",
@@ -54,6 +56,8 @@ function SettingsPage() {
       vat_percent: String(settings.data.vat_percent),
       auto_print: settings.data.auto_print,
       print_copies: String(settings.data.print_copies),
+      print_cashier_receipt: settings.data.print_cashier_receipt,
+      print_customer_receipt: settings.data.print_customer_receipt,
       kaspi_enabled: settings.data.kaspi_enabled,
       kaspi_api_url: settings.data.kaspi_api_url,
       kaspi_terminal_id: settings.data.kaspi_terminal_id,
@@ -72,6 +76,8 @@ function SettingsPage() {
         vat_percent: Number(form.vat_percent) || 0,
         auto_print: form.auto_print,
         print_copies: Math.min(3, Math.max(1, Number(form.print_copies) || 1)),
+        print_cashier_receipt: form.print_cashier_receipt,
+        print_customer_receipt: form.print_customer_receipt,
         kaspi_enabled: form.kaspi_enabled,
         kaspi_api_url: form.kaspi_api_url.trim(),
         kaspi_terminal_id: form.kaspi_terminal_id.trim(),
@@ -137,6 +143,20 @@ function SettingsPage() {
             onCheckedChange={(v) => setForm({ ...form, auto_print: v })}
           />
         </label>
+        <label className="flex items-center justify-between gap-3">
+          <span className="text-sm">Печатать чек кассира (для выполнения заказа)</span>
+          <Switch
+            checked={form.print_cashier_receipt}
+            onCheckedChange={(v) => setForm({ ...form, print_cashier_receipt: v })}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3">
+          <span className="text-sm">Печатать чек покупателя (номер заказа)</span>
+          <Switch
+            checked={form.print_customer_receipt}
+            onCheckedChange={(v) => setForm({ ...form, print_customer_receipt: v })}
+          />
+        </label>
         <div className="grid gap-1.5">
           <Label>Копий чека</Label>
           <Input
@@ -146,9 +166,9 @@ function SettingsPage() {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Чек уходит на принтер, выбранный по умолчанию в системе планшета или компьютера. Чтобы
-          печать шла без окна подтверждения, откройте кассу в браузере Chrome, запущенном с
-          режимом киоска (ярлык с параметром --kiosk-printing).
+          Чек печатается на ленте шириной 58 мм. Он уходит на принтер, выбранный по умолчанию в
+          системе планшета или компьютера. Чтобы печать шла без окна подтверждения, откройте кассу
+          в браузере Chrome, запущенном с режимом киоска (ярлык с параметром --kiosk-printing).
         </p>
       </section>
 
