@@ -56,6 +56,8 @@ function SettingsPage() {
       vat_percent: String(settings.data.vat_percent),
       auto_print: settings.data.auto_print,
       print_copies: String(settings.data.print_copies),
+      print_cashier_receipt: settings.data.print_cashier_receipt,
+      print_customer_receipt: settings.data.print_customer_receipt,
       kaspi_enabled: settings.data.kaspi_enabled,
       kaspi_api_url: settings.data.kaspi_api_url,
       kaspi_terminal_id: settings.data.kaspi_terminal_id,
