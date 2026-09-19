@@ -38,6 +38,8 @@ function SettingsPage() {
     vat_percent: "0",
     auto_print: true,
     print_copies: "1",
+    print_cashier_receipt: true,
+    print_customer_receipt: true,
     kaspi_enabled: false,
     kaspi_api_url: "",
     kaspi_terminal_id: "",
