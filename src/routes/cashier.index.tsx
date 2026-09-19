@@ -226,7 +226,13 @@ function CashierPos() {
         <div id="receipt-print">
           <ReceiptPair r={receipt} cashier={printCashier} customer={printCustomer} />
         </div>
-        <div className="mx-auto mt-4 flex max-w-sm gap-2 print:hidden">
+        <div className="mx-auto mt-4 max-w-sm print:hidden">
+          {settings?.["printer_name"] ? (
+            <p className="mb-2 text-center text-xs text-muted-foreground">
+              Принтер: {String(settings["printer_name"])}
+            </p>
+          ) : null}
+          <div className="flex gap-2">
           <Button className="flex-1" onClick={() => window.print()}>
             <Printer className="size-4" /> Печать
           </Button>
