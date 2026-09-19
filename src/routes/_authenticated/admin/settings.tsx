@@ -137,6 +137,20 @@ function SettingsPage() {
             onCheckedChange={(v) => setForm({ ...form, auto_print: v })}
           />
         </label>
+        <label className="flex items-center justify-between gap-3">
+          <span className="text-sm">Печатать чек кассира (для выполнения заказа)</span>
+          <Switch
+            checked={form.print_cashier_receipt}
+            onCheckedChange={(v) => setForm({ ...form, print_cashier_receipt: v })}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3">
+          <span className="text-sm">Печатать чек покупателя (номер заказа)</span>
+          <Switch
+            checked={form.print_customer_receipt}
+            onCheckedChange={(v) => setForm({ ...form, print_customer_receipt: v })}
+          />
+        </label>
         <div className="grid gap-1.5">
           <Label>Копий чека</Label>
           <Input
@@ -146,9 +160,9 @@ function SettingsPage() {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Чек уходит на принтер, выбранный по умолчанию в системе планшета или компьютера. Чтобы
-          печать шла без окна подтверждения, откройте кассу в браузере Chrome, запущенном с
-          режимом киоска (ярлык с параметром --kiosk-printing).
+          Чек печатается на ленте шириной 58 мм. Он уходит на принтер, выбранный по умолчанию в
+          системе планшета или компьютера. Чтобы печать шла без окна подтверждения, откройте кассу
+          в браузере Chrome, запущенном с режимом киоска (ярлык с параметром --kiosk-printing).
         </p>
       </section>
 
