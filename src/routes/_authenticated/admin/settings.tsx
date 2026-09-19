@@ -76,6 +76,8 @@ function SettingsPage() {
         vat_percent: Number(form.vat_percent) || 0,
         auto_print: form.auto_print,
         print_copies: Math.min(3, Math.max(1, Number(form.print_copies) || 1)),
+        print_cashier_receipt: form.print_cashier_receipt,
+        print_customer_receipt: form.print_customer_receipt,
         kaspi_enabled: form.kaspi_enabled,
         kaspi_api_url: form.kaspi_api_url.trim(),
         kaspi_terminal_id: form.kaspi_terminal_id.trim(),
