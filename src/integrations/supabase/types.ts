@@ -507,6 +507,7 @@ export type Database = {
           print_cashier_receipt: boolean
           print_copies: number
           print_customer_receipt: boolean
+          printer_name: string
           receipt_footer: string
           shift_max_hours: number
           shop_name: string
@@ -528,6 +529,7 @@ export type Database = {
           print_cashier_receipt?: boolean
           print_copies?: number
           print_customer_receipt?: boolean
+          printer_name?: string
           receipt_footer?: string
           shift_max_hours?: number
           shop_name?: string
@@ -549,6 +551,7 @@ export type Database = {
           print_cashier_receipt?: boolean
           print_copies?: number
           print_customer_receipt?: boolean
+          printer_name?: string
           receipt_footer?: string
           shift_max_hours?: number
           shop_name?: string

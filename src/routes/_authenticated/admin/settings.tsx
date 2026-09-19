@@ -40,6 +40,7 @@ function SettingsPage() {
     print_copies: "1",
     print_cashier_receipt: true,
     print_customer_receipt: true,
+    printer_name: "",
     kaspi_enabled: false,
     kaspi_api_url: "",
     kaspi_terminal_id: "",
@@ -58,6 +59,7 @@ function SettingsPage() {
       print_copies: String(settings.data.print_copies),
       print_cashier_receipt: settings.data.print_cashier_receipt,
       print_customer_receipt: settings.data.print_customer_receipt,
+      printer_name: settings.data.printer_name ?? "",
       kaspi_enabled: settings.data.kaspi_enabled,
       kaspi_api_url: settings.data.kaspi_api_url,
       kaspi_terminal_id: settings.data.kaspi_terminal_id,
@@ -78,6 +80,7 @@ function SettingsPage() {
         print_copies: Math.min(3, Math.max(1, Number(form.print_copies) || 1)),
         print_cashier_receipt: form.print_cashier_receipt,
         print_customer_receipt: form.print_customer_receipt,
+        printer_name: form.printer_name.trim(),
         kaspi_enabled: form.kaspi_enabled,
         kaspi_api_url: form.kaspi_api_url.trim(),
         kaspi_terminal_id: form.kaspi_terminal_id.trim(),
@@ -165,11 +168,40 @@ function SettingsPage() {
             onChange={(e) => setForm({ ...form, print_copies: e.target.value })}
           />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Чек печатается на ленте шириной 58 мм. Он уходит на принтер, выбранный по умолчанию в
-          системе планшета или компьютера. Чтобы печать шла без окна подтверждения, откройте кассу
-          в браузере Chrome, запущенном с режимом киоска (ярлык с параметром --kiosk-printing).
-        </p>
+        <div className="grid gap-1.5">
+          <Label>Принтер чеков</Label>
+          <Input
+            value={form.printer_name}
+            placeholder="Например: Xprinter XP-58"
+            onChange={(e) => setForm({ ...form, printer_name: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Укажите название принтера — оно будет показано кассиру как подсказка. Сам принтер
+            выбирается в системе (см. инструкцию ниже): браузер не разрешает сайту менять принтер.
+          </p>
+        </div>
+        <div className="rounded-xl bg-muted p-3 text-xs leading-5 text-muted-foreground">
+          <p className="font-semibold text-foreground">Как сделать печать сразу на нужный принтер:</p>
+          <ol className="mt-1 list-decimal space-y-1 pl-4">
+            <li>
+              В системе планшета/компьютера назначьте этот принтер принтером по умолчанию
+              (Windows: Параметры → Принтеры → нужный принтер → «По умолчанию»).
+            </li>
+            <li>
+              Запускайте кассу в Chrome в режиме киоска: создайте ярлык Chrome и в поле «Объект»
+              допишите{" "}
+              <code className="rounded bg-background px-1">
+                --kiosk-printing --kiosk &quot;адрес кассы&quot;
+              </code>
+              .
+            </li>
+            <li>
+              Откройте кассу через этот ярлык — после оплаты чек уйдёт на принтер по умолчанию
+              автоматически, без окна выбора принтера.
+            </li>
+          </ol>
+          <p className="mt-1">Чек рассчитан на ленту шириной 58 мм.</p>
+        </div>
       </section>
 
       <section className="grid gap-3 rounded-2xl border border-border bg-card p-4">
