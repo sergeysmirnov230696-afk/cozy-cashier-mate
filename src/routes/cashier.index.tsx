@@ -236,9 +236,10 @@ function CashierPos() {
           <Button className="flex-1" onClick={() => window.print()}>
             <Printer className="size-4" /> Печать
           </Button>
-          <Button className="flex-1" variant="secondary" onClick={() => setReceipt(null)}>
-            Новый заказ
-          </Button>
+            <Button className="flex-1" variant="secondary" onClick={() => setReceipt(null)}>
+              Новый заказ
+            </Button>
+          </div>
         </div>
       </main>
     );
