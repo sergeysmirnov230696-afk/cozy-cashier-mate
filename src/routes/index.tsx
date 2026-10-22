@@ -13,6 +13,8 @@ export const Route = createFileRoute("/")({
           "Касса для продавца и панель управления точкой быстрого питания: товары, склад, смены и отчёты в тенге.",
       },
       { property: "og:title", content: "POS-система для куры гриль и донеров" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Продажи, расчёт сдачи, склад, смены и отчёты — всё в одном приложении.",

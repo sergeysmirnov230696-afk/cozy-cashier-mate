@@ -16,6 +16,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Вход для сотрудников точки быстрого питания." },
       { property: "og:title", content: "Вход в POS-систему" },
       { property: "og:description", content: "Вход для сотрудников точки быстрого питания." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
