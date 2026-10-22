@@ -34,6 +34,7 @@ import {
 import { useCashier } from "@/lib/use-cashier";
 import { useAutoPrint } from "@/lib/use-auto-print";
 import { ReceiptPair } from "@/components/pos/CashierReceipts";
+import { NumPad } from "@/components/pos/NumPad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,6 +111,7 @@ function CashierPos() {
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState(0);
   const [cardAmount, setCardAmount] = useState(0);
+  const [padTarget, setPadTarget] = useState<"cash" | "card">("cash");
   const [receipt, setReceipt] = useState<ReceiptPayload | null>(null);
 
   const data = pos.data;
@@ -542,6 +544,7 @@ function CashierPos() {
             onClick={() => {
               setCashReceived(total);
               setCardAmount(0);
+              setPadTarget("cash");
               setPayOpen(true);
             }}
           >
@@ -596,7 +599,7 @@ function CashierPos() {
       </Dialog>
 
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[92dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Оплата {formatKzt(total)}</DialogTitle>
           </DialogHeader>
@@ -616,6 +619,7 @@ function CashierPos() {
                   setMethod(v);
                   setCashReceived(v === "card" ? 0 : total);
                   setCardAmount(v === "mixed" ? 0 : v === "card" ? total : 0);
+                  setPadTarget(v === "mixed" ? "card" : "cash");
                 }}
               >
                 {label}
@@ -627,8 +631,9 @@ function CashierPos() {
             <div>
               <Label>Сумма картой</Label>
               <Input
-                className="mt-2"
+                className={`mt-2 ${padTarget === "card" ? "border-primary" : ""}`}
                 inputMode="numeric"
+                onFocus={() => setPadTarget("card")}
                 value={String(cardAmount)}
                 onChange={(e) => setCardAmount(Number(e.target.value.replace(/\D/g, "")) || 0)}
               />
@@ -639,8 +644,9 @@ function CashierPos() {
             <div>
               <Label>Получено наличными</Label>
               <Input
-                className="mt-2 text-lg"
+                className={`mt-2 text-lg ${padTarget === "cash" ? "border-primary" : ""}`}
                 inputMode="numeric"
+                onFocus={() => setPadTarget("cash")}
                 value={String(cashReceived)}
                 onChange={(e) => setCashReceived(Number(e.target.value.replace(/\D/g, "")) || 0)}
               />
@@ -661,6 +667,13 @@ function CashierPos() {
               </div>
               <p className="mt-3 text-lg font-bold">Сдача: {formatKzt(change)}</p>
             </div>
+          )}
+
+          {method !== "card" && (
+            <NumPad
+              value={padTarget === "card" ? cardAmount : cashReceived}
+              onChange={(v) => (padTarget === "card" ? setCardAmount : setCashReceived)(v)}
+            />
           )}
 
           <Button size="lg" disabled={payM.isPending} onClick={() => payM.mutate()}>

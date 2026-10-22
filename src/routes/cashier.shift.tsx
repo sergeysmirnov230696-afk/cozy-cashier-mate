@@ -15,6 +15,8 @@ import { useCashier } from "@/lib/use-cashier";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumPad } from "@/components/pos/NumPad";
+
 
 export const Route = createFileRoute("/cashier/shift")({
   head: () => ({
@@ -43,11 +45,12 @@ function ShiftScreen() {
   const close = useServerFn(closeShift);
   const cashOp = useServerFn(addCashOperation);
 
-  const [cashStart, setCashStart] = useState("");
-  const [counted, setCounted] = useState("");
+  const [cashStart, setCashStart] = useState(0);
+  const [counted, setCounted] = useState(0);
   const [note, setNote] = useState("");
-  const [opAmount, setOpAmount] = useState("");
+  const [opAmount, setOpAmount] = useState(0);
   const [opReason, setOpReason] = useState("");
+  const [pad, setPad] = useState<"start" | "op" | "counted" | null>(null);
 
   const data = useQuery({
     queryKey: ["cashier", "shift-report"],
@@ -61,10 +64,10 @@ function ShiftScreen() {
   }
 
   const openM = useMutation({
-    mutationFn: () => open({ data: { cashStart: Number(cashStart.replace(/\s/g, "")) || 0 } }),
+    mutationFn: () => open({ data: { cashStart } }),
     onSuccess: (res) => {
       if (!res.ok) { toast.error(res.message); return; }
-      setCashStart("");
+      setCashStart(0);
       refresh();
       toast.success("Смена открыта");
     },
@@ -72,11 +75,10 @@ function ShiftScreen() {
 
   const closeM = useMutation({
     mutationFn: () =>
-      close({ data: { countedCash: Number(counted.replace(/\s/g, "")) || 0, note } }),
+      close({ data: { countedCash: counted, note } }),
     onSuccess: (res) => {
       if (!res.ok) { toast.error(res.message); return; }
-      setCounted("");
-      setNote("");
+      setCounted(0);
       refresh();
       toast.success(
         res.counted === res.expectedCash
@@ -89,11 +91,11 @@ function ShiftScreen() {
   const opM = useMutation({
     mutationFn: (type: "in" | "out") =>
       cashOp({
-        data: { type, amount: Number(opAmount.replace(/\s/g, "")) || 0, reason: opReason },
+        data: { type, amount: opAmount, reason: opReason },
       }),
     onSuccess: (res) => {
       if (!res.ok) { toast.error(res.message); return; }
-      setOpAmount("");
+      setOpAmount(0);
       setOpReason("");
       refresh();
       toast.success("Операция записана");
@@ -123,12 +125,16 @@ function ShiftScreen() {
             </p>
             <Label className="mt-4 block">Наличные в кассе на начало</Label>
             <Input
-              className="mt-2"
+              className={`mt-2 ${pad === "start" ? "border-primary" : ""}`}
               inputMode="numeric"
-              value={cashStart}
-              onChange={(e) => setCashStart(e.target.value)}
+              onFocus={() => setPad("start")}
+              value={String(cashStart)}
+              onChange={(e) => setCashStart(Number(e.target.value.replace(/\D/g, "")) || 0)}
               placeholder="0"
             />
+            {pad === "start" && (
+              <NumPad className="mt-3" value={cashStart} onChange={setCashStart} />
+            )}
             <Button className="mt-3" size="lg" onClick={() => openM.mutate()}>
               <Wallet className="size-4" /> Открыть смену
             </Button>
@@ -158,8 +164,10 @@ function ShiftScreen() {
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <Input
                   inputMode="numeric"
-                  value={opAmount}
-                  onChange={(e) => setOpAmount(e.target.value)}
+                  className={pad === "op" ? "border-primary" : ""}
+                  onFocus={() => setPad("op")}
+                  value={String(opAmount)}
+                  onChange={(e) => setOpAmount(Number(e.target.value.replace(/\D/g, "")) || 0)}
                   placeholder="Сумма"
                 />
                 <Input
@@ -168,6 +176,9 @@ function ShiftScreen() {
                   placeholder="Причина"
                 />
               </div>
+              {pad === "op" && (
+                <NumPad className="mt-3" value={opAmount} onChange={setOpAmount} />
+              )}
               <div className="mt-3 flex gap-2">
                 <Button variant="secondary" onClick={() => opM.mutate("in")}>
                   <ArrowDownCircle className="size-4" /> Внести
@@ -185,12 +196,16 @@ function ShiftScreen() {
               </p>
               <Label className="mt-4 block">Наличные в кассе по факту</Label>
               <Input
-                className="mt-2"
+                className={`mt-2 ${pad === "counted" ? "border-primary" : ""}`}
                 inputMode="numeric"
-                value={counted}
-                onChange={(e) => setCounted(e.target.value)}
+                onFocus={() => setPad("counted")}
+                value={String(counted)}
+                onChange={(e) => setCounted(Number(e.target.value.replace(/\D/g, "")) || 0)}
                 placeholder="0"
               />
+              {pad === "counted" && (
+                <NumPad className="mt-3" value={counted} onChange={setCounted} />
+              )}
               <Label className="mt-3 block">Примечание</Label>
               <Input
                 className="mt-2"
