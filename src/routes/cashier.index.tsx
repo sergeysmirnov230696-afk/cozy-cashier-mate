@@ -38,6 +38,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import chickenImage from "@/assets/product-chicken.jpg";
+import donerImage from "@/assets/product-doner.jpg";
+import friesImage from "@/assets/product-fries.jpg";
+import drinkImage from "@/assets/product-drink.jpg";
 
 export const Route = createFileRoute("/cashier/")({
   head: () => ({
@@ -64,6 +68,16 @@ export const Route = createFileRoute("/cashier/")({
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (v == null ? "" : String(v));
 const n = (v: unknown) => Number(v ?? 0);
+
+function productImage(p: Row) {
+  if (p["image_url"]) return s(p["image_url"]);
+  const name = s(p["name"]).toLowerCase();
+  if (/кур|крыл|гриль/.test(name)) return chickenImage;
+  if (/донер|шаурм/.test(name)) return donerImage;
+  if (/фри|карто/.test(name)) return friesImage;
+  if (/кола|cola|пепси|pepsi|вода|сок|напит|чай|кофе|айран|фанта|fanta|sprite|спрайт/.test(name)) return drinkImage;
+  return null;
+}
 
 function CashierPos() {
   const cashier = useCashier();
@@ -246,11 +260,13 @@ function CashierPos() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-        <h1 className="font-bold">Касса</h1>
-        <span className="text-sm text-muted-foreground">{cashier.data?.name}</span>
-        <div className="ml-auto flex flex-wrap gap-2">
+    <main className="min-h-dvh bg-background lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden">
+      <header className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3 lg:px-6">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-xl font-bold">Касса</h1>
+          <span className="truncate text-sm text-muted-foreground">{cashier.data?.name}</span>
+        </div>
+        <div className="flex shrink-0 gap-1 sm:gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link to="/cashier/orders">
               <ClipboardList className="size-4" /> Заказы
@@ -264,6 +280,8 @@ function CashierPos() {
           <Button
             size="sm"
             variant="ghost"
+            aria-label="Выйти из кассы"
+            title="Выйти из кассы"
             onClick={async () => {
               await logout();
               qc.clear();
@@ -276,7 +294,7 @@ function CashierPos() {
       </header>
 
       {!shift && (
-        <div className="flex flex-wrap items-center gap-3 bg-destructive/10 px-4 py-3 text-sm">
+        <div className="flex shrink-0 flex-wrap items-center gap-3 bg-destructive/10 px-4 py-3 text-sm">
           <AlertTriangle className="size-4 text-destructive" />
           Смена закрыта — продажи недоступны.
           <Button asChild size="sm">
@@ -285,23 +303,24 @@ function CashierPos() {
         </div>
       )}
       {(data?.lowStock?.length ?? 0) > 0 && (
-        <div className="px-4 py-2 text-xs text-muted-foreground">
+        <div className="shrink-0 px-4 py-2 text-xs text-muted-foreground lg:max-h-16 lg:overflow-y-auto">
           Мало на складе: {data?.lowStock.map((p) => `${p.name} (${p.stock})`).join(", ")}
         </div>
       )}
 
-      <div className="grid gap-4 p-4 lg:grid-cols-[1fr_360px]">
-        <section>
-          <div className="relative">
+      <div className="grid min-h-0 min-w-0 gap-4 p-4 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:px-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <section aria-label="Блюда" className="flex min-h-0 min-w-0 flex-col lg:overflow-hidden">
+          <div className="relative shrink-0">
             <Search className="absolute top-3 left-3 size-4 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Поиск блюда"
-              className="pl-9"
+              aria-label="Поиск блюда"
+              className="h-11 pl-9"
             />
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex shrink-0 flex-wrap gap-2">
             <Button
               size="sm"
               variant={category === null ? "default" : "secondary"}
@@ -321,36 +340,44 @@ function CashierPos() {
             ))}
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div aria-label="Список блюд" className="mt-4 grid min-h-0 grid-cols-2 content-start gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-2">
+            {pos.isPending && <p className="col-span-full py-8 text-center text-muted-foreground">Загрузка блюд…</p>}
+            {pos.isError && <div className="col-span-full py-8 text-center"><p className="mb-3 text-destructive">Не удалось загрузить блюда</p><Button variant="secondary" onClick={() => pos.refetch()}>Повторить</Button></div>}
+            {!pos.isPending && !pos.isError && visible.length === 0 && <p className="col-span-full py-8 text-center text-muted-foreground">Блюда не найдены</p>}
             {visible.map((p) => {
               const out = !!p["in_stop_list"] || (!!p["track_stock"] && n(p["stock"]) <= 0);
+              const image = productImage(p);
               return (
-                <button
+                <Button
                   key={s(p["id"])}
                   onClick={() => onProductClick(p)}
-                  disabled={!shift}
-                  className={`tile-press rounded-2xl border border-border bg-card p-3 text-left ${
+                  disabled={!shift || out}
+                  variant="ghost"
+                  className={`tile-press relative aspect-square h-auto min-w-0 flex-col items-stretch justify-start gap-0 overflow-hidden whitespace-normal rounded-lg border border-border bg-card p-0 text-left hover:bg-card ${
                     out ? "opacity-40" : "hover:border-primary"
                   }`}
                 >
-                  <div className="text-2xl">{s(p["emoji"]) || "🍽️"}</div>
-                  <div className="mt-2 text-sm leading-tight font-semibold">{s(p["name"])}</div>
-                  <div className="mt-1 text-sm text-primary">{formatKzt(n(p["price"]))}</div>
-                  {out ? <div className="text-xs text-destructive">нет в наличии</div> : null}
-                </button>
+                  {image ? <img src={image} alt="" loading="lazy" className="h-[46%] w-full shrink-0 object-cover" /> : <div className="flex h-[46%] shrink-0 items-center justify-center bg-muted text-4xl">{s(p["emoji"]) || "🍽️"}</div>}
+                  <div className="flex min-h-0 flex-1 flex-col justify-between p-3">
+                    <div className="line-clamp-2 break-words text-sm leading-tight font-semibold">{s(p["name"])}</div>
+                    <div className="mt-1 text-sm font-bold text-primary tnum">{formatKzt(n(p["price"]))}</div>
+                  </div>
+                  {out ? <span className="absolute top-2 left-2 rounded bg-background px-2 py-1 text-xs text-destructive">Нет в наличии</span> : null}
+                </Button>
               );
             })}
           </div>
         </section>
 
-        <aside className="rounded-2xl border border-border bg-card p-4">
-          <h2 className="font-semibold">Чек</h2>
-          <div className="mt-3 grid gap-2">
+        <aside aria-label="Текущий заказ" className="flex min-h-0 min-w-0 flex-col border border-border bg-card lg:overflow-hidden">
+          <h2 className="shrink-0 border-b border-border px-4 py-3 text-lg font-semibold">Чек <span className="ml-2 text-sm font-normal text-muted-foreground">{lines.reduce((sum, line) => sum + line.qty, 0)} поз.</span></h2>
+          <div className="min-h-0 flex-1 p-4 lg:overflow-y-auto lg:overscroll-contain">
+          <div className="grid gap-2">
             {lines.length === 0 && <p className="text-sm text-muted-foreground">Корзина пуста</p>}
             {lines.map((l) => (
-              <div key={l.key} className="rounded-xl bg-muted p-2">
-                <div className="flex items-start gap-2">
-                  <div className="flex-1">
+              <div key={l.key} className="rounded-lg bg-muted p-2">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                  <div className="min-w-0 break-words">
                     <div className="text-sm font-medium">{l.name}</div>
                     {l.modifiers.length > 0 && (
                       <div className="text-xs text-muted-foreground">
@@ -364,6 +391,7 @@ function CashierPos() {
                   <Button
                     size="icon"
                     variant="secondary"
+                    aria-label={`Уменьшить количество: ${l.name}`}
                     onClick={() =>
                       setLines((prev) =>
                         prev
@@ -378,6 +406,7 @@ function CashierPos() {
                   <Button
                     size="icon"
                     variant="secondary"
+                    aria-label={`Увеличить количество: ${l.name}`}
                     onClick={() =>
                       setLines((prev) =>
                         prev.map((x) => (x.key === l.key ? { ...x, qty: x.qty + 1 } : x)),
@@ -390,6 +419,7 @@ function CashierPos() {
                     size="icon"
                     variant="ghost"
                     className="ml-auto"
+                    aria-label={`Удалить из чека: ${l.name}`}
                     onClick={() => setLines((prev) => prev.filter((x) => x.key !== l.key))}
                   >
                     <Trash2 className="size-4" />
@@ -447,7 +477,7 @@ function CashierPos() {
 
           <div className="mt-4 grid gap-2">
             <Label>Телефон клиента (бонусы)</Label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
               <Input
                 value={phone}
                 inputMode="tel"
@@ -480,7 +510,9 @@ function CashierPos() {
             />
           </div>
 
-          <div className="mt-4 space-y-1 text-sm">
+          </div>
+          <div className="shrink-0 border-t border-border bg-card p-4">
+          <div className="space-y-1 text-sm tnum">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Сумма</span>
               <span>{formatKzt(subtotal)}</span>
@@ -515,6 +547,7 @@ function CashierPos() {
           >
             К оплате
           </Button>
+          </div>
         </aside>
       </div>
 
