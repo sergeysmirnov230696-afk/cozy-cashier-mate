@@ -72,8 +72,8 @@ const n = (v: unknown) => Number(v ?? 0);
 function productImage(p: Row) {
   if (p["image_url"]) return s(p["image_url"]);
   const name = s(p["name"]).toLowerCase();
-  if (/кур|крыл|гриль/.test(name)) return chickenImage;
   if (/донер|шаурм/.test(name)) return donerImage;
+  if (/кур|крыл|гриль/.test(name)) return chickenImage;
   if (/фри|карто/.test(name)) return friesImage;
   if (/кола|cola|пепси|pepsi|вода|сок|напит|чай|кофе|айран|фанта|fanta|sprite|спрайт/.test(name)) return drinkImage;
   return null;
@@ -340,7 +340,7 @@ function CashierPos() {
             ))}
           </div>
 
-          <div aria-label="Список блюд" className="mt-4 grid min-h-0 grid-cols-2 content-start gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-2">
+          <div aria-label="Список блюд" className="mt-4 grid min-h-0 auto-rows-max grid-cols-2 content-start gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-2">
             {pos.isPending && <p className="col-span-full py-8 text-center text-muted-foreground">Загрузка блюд…</p>}
             {pos.isError && <div className="col-span-full py-8 text-center"><p className="mb-3 text-destructive">Не удалось загрузить блюда</p><Button variant="secondary" onClick={() => pos.refetch()}>Повторить</Button></div>}
             {!pos.isPending && !pos.isError && visible.length === 0 && <p className="col-span-full py-8 text-center text-muted-foreground">Блюда не найдены</p>}
