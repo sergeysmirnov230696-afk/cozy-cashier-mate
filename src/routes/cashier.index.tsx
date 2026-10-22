@@ -353,7 +353,7 @@ function CashierPos() {
                   onClick={() => onProductClick(p)}
                   disabled={!shift || out}
                   variant="ghost"
-                  className={`tile-press relative aspect-square h-auto min-w-0 flex-col items-stretch justify-start gap-0 overflow-hidden whitespace-normal rounded-lg border border-border bg-card p-0 text-left hover:bg-card ${
+                  className={`tile-press relative aspect-square h-auto min-w-0 flex-col items-stretch justify-start gap-0 overflow-hidden whitespace-normal rounded-lg border border-border bg-card p-0 text-left text-card-foreground hover:bg-card hover:text-card-foreground ${
                     out ? "opacity-40" : "hover:border-primary"
                   }`}
                 >
