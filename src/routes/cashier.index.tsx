@@ -44,6 +44,10 @@ import chickenImage from "@/assets/product-chicken.jpg";
 import donerImage from "@/assets/product-doner.jpg";
 import friesImage from "@/assets/product-fries.jpg";
 import drinkImage from "@/assets/product-drink.jpg";
+import lavashImage from "@/assets/product-lavash.jpg";
+import kryloImage from "@/assets/product-krylo.jpg";
+import pitaImage from "@/assets/product-pita.jpg";
+
 
 export const Route = createFileRoute("/cashier/")({
   head: () => ({
