@@ -1,14 +1,26 @@
-# Welcome to your Lovable project
+# Cozy Cashier Hub
+
+Импортируй и запусти https://github.com/sergeysmirnov230696-afk/grill-kiosk-cashier.git
+
+
+
+Сделай отдельный вход для кассиров (только продажи) только выбираешь кассира  и вводишь его пинкод (смена максимум 24 часа) открыть не сможешь новую пока не закроешь старую
+
+Также сделай чтобы заказы (от клиентов) были открытый, выполненный и отмененный. И чтобы выходило 2 чека после оплаты- для кассира (для выполнения заказа) и для покупателя (с номером заказа и его заказом, минимум информации)
+
+И также добавь еще минимум 10+ полезных функций которые точно нужны этому проекту
 
 This project was built with [Lovable](https://lovable.dev).
 
+**Live app**: https://cozy-cashier-mate.lovable.app
+
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/941c75dd-ffee-47ae-95f5-908b3d5db313).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +32,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
