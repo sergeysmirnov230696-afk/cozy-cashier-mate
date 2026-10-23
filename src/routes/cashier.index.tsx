@@ -47,7 +47,7 @@ import drinkImage from "@/assets/product-drink.jpg";
 import lavashImage from "@/assets/product-lavash.jpg";
 import kryloImage from "@/assets/product-krylo.jpg";
 import pitaImage from "@/assets/product-pita.jpg";
-
+import shaurmaImage from "@/assets/product-shaurma.jpg";
 
 export const Route = createFileRoute("/cashier/")({
   head: () => ({
