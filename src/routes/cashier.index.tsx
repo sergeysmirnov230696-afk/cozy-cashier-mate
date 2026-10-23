@@ -78,8 +78,11 @@ const n = (v: unknown) => Number(v ?? 0);
 function productImage(p: Row) {
   if (p["image_url"]) return s(p["image_url"]);
   const name = s(p["name"]).toLowerCase();
-  if (/донер|шаурм/.test(name)) return donerImage;
-  if (/кур|крыл|гриль/.test(name)) return chickenImage;
+  if (/донер|шаурм/.test(name)) return shaurmaImage;
+  if (/кур|гриль/.test(name)) return chickenImage;
+if (/крыл|грy/.test(name)) return kryloImage;
+if (/лаваш|хлеб|булочка/.test(name)) return lavashImage;
+if (/пита|лепешка|печ/.test(name)) return pitaImage;
   if (/фри|карто/.test(name)) return friesImage;
   if (/кола|cola|пепси|pepsi|вода|сок|напит|чай|кофе|айран|фанта|fanta|sprite|спрайт/.test(name)) return drinkImage;
   return null;
