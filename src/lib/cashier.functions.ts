@@ -380,6 +380,11 @@ type CreateOrderInput = {
   bonusUsed?: number;
 };
 
+function isWeightUnit(product: Record<string, unknown> | null | undefined): boolean {
+  const unit = String(product?.["unit"] ?? "").trim().toLowerCase();
+  return unit === "кг" || unit === "kg";
+}
+
 /** Создаёт заказ со статусом «открыт», списывает остатки, считает бонусы. */
 export const createOrder = createServerFn({ method: "POST" })
   .inputValidator((input: CreateOrderInput) => input)
@@ -420,14 +425,17 @@ export const createOrder = createServerFn({ method: "POST" })
       if (product["in_stop_list"])
         return { ok: false, message: `«${String(product["name"])}» в стоп-листе` };
 
-      const qty = Math.max(1, Math.round(line.qty));
+      const soldByWeight = isWeightUnit(product);
+      const qty = soldByWeight
+        ? Math.max(0.001, Math.round(line.qty * 1000) / 1000)
+        : Math.max(1, Math.round(line.qty));
       const mods = line.modifierIds
         .map((id) => modifierMap.get(id))
         .filter((m): m is Record<string, unknown> => Boolean(m))
         .map((m) => ({ name: String(m["name"]), price: Number(m["price"] ?? 0) }));
 
       const unit = Number(product["price"] ?? 0) + mods.reduce((a, m) => a + m.price, 0);
-      const total = unit * qty;
+      const total = Math.round(unit * qty);
       subtotal += total;
 
       items.push({ name: String(product["name"]), qty, price: unit, total, modifiers: mods });
@@ -511,9 +519,12 @@ export const createOrder = createServerFn({ method: "POST" })
     const stockRows = data.lines
       .map((line) => ({ line, product: productMap.get(line.productId) }))
       .filter(({ product }) => product && product["track_stock"])
-      .map(({ line }) => ({
+      .map(({ line, product }) => ({
         product_id: line.productId,
-        qty: -Math.max(1, Math.round(line.qty)),
+        qty:
+          product && isWeightUnit(product)
+            ? -Math.round(line.qty * 1000) / 1000
+            : -Math.max(1, Math.round(line.qty)),
         type: "sale",
         note: `Заказ №${order.daily_no}`,
       }));

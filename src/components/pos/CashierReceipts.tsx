@@ -14,6 +14,11 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   cancelled: "Отменён",
 };
 
+function qtyLabel(qty: number): string {
+  if (Number.isInteger(qty)) return String(qty);
+  return `${qty.toFixed(3).replace(".", ",").replace(/0+$/, "").replace(/,$/, "")} кг`;
+}
+
 function Divider() {
   return <div className="my-2 border-t border-dashed border-black/40" />;
 }
@@ -55,7 +60,8 @@ export function CashierReceipt({ r }: { r: ReceiptPayload }) {
           ) : null}
           <div className="flex justify-between">
             <span>
-              {l.qty} x {formatKzt(l.price)}
+              {qtyLabel(l.qty)} × {formatKzt(l.price)}
+              {!Number.isInteger(l.qty) ? "/кг" : ""}
             </span>
             <span>{formatKzt(l.total)}</span>
           </div>
@@ -106,7 +112,8 @@ export function CustomerReceipt({ r }: { r: ReceiptPayload }) {
       {r.items.map((l, i) => (
         <div key={i} className="flex justify-between">
           <span>
-            {l.name} x{l.qty}
+            {l.name}
+            {Number.isInteger(l.qty) ? ` x${l.qty}` : ` · ${qtyLabel(l.qty)}`}
           </span>
           <span>{formatKzt(l.total)}</span>
         </div>

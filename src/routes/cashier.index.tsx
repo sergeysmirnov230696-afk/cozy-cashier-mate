@@ -26,6 +26,7 @@ import {
 import {
   CASH_BILLS,
   cartSubtotal,
+  formatKg,
   formatKzt,
   lineTotal,
   type CartLine,
@@ -80,6 +81,11 @@ function productImage(p: Row) {
   return null;
 }
 
+function isWeight(p: Row) {
+  const unit = s(p["unit"]).trim().toLowerCase();
+  return unit === "кг" || unit === "kg";
+}
+
 function CashierPos() {
   const cashier = useCashier();
   const qc = useQueryClient();
@@ -113,6 +119,8 @@ function CashierPos() {
   const [cardAmount, setCardAmount] = useState(0);
   const [padTarget, setPadTarget] = useState<"cash" | "card">("cash");
   const [receipt, setReceipt] = useState<ReceiptPayload | null>(null);
+  const [weightProduct, setWeightProduct] = useState<Row | null>(null);
+  const [weightGrams, setWeightGrams] = useState(0);
 
   const data = pos.data;
   const products = (data?.products ?? []) as Row[];
@@ -136,11 +144,11 @@ function CashierPos() {
   const total = Math.max(0, subtotal - discount - bonus);
   const change = Math.max(0, cashReceived - (method === "mixed" ? total - cardAmount : total));
 
-  function addProduct(p: Row, picked: CartModifier[] = []) {
+  function addProduct(p: Row, picked: CartModifier[] = [], qty = 1) {
     const key = `${s(p["id"])}|${picked.map((m) => m.id).sort().join(",")}`;
     setLines((prev) => {
       const found = prev.find((l) => l.key === key);
-      if (found) return prev.map((l) => (l.key === key ? { ...l, qty: l.qty + 1 } : l));
+      if (found) return prev.map((l) => (l.key === key ? { ...l, qty: l.qty + qty } : l));
       return [
         ...prev,
         {
@@ -148,11 +156,12 @@ function CashierPos() {
           productId: s(p["id"]),
           name: s(p["name"]),
           price: n(p["price"]),
-          qty: 1,
+          qty,
           emoji: (p["emoji"] as string) ?? null,
           imageUrl: (p["image_url"] as string) ?? null,
           modifiers: picked,
           trackStock: !!p["track_stock"],
+          byWeight: isWeight(p),
         },
       ];
     });
@@ -165,6 +174,11 @@ function CashierPos() {
     }
     if (p["track_stock"] && n(p["stock"]) <= 0) {
       toast.error("Нет на складе");
+      return;
+    }
+    if (isWeight(p)) {
+      setWeightProduct(p);
+      setWeightGrams(0);
       return;
     }
     const allowed = modifiers.filter((m) => !m["category_id"] || m["category_id"] === p["category_id"]);
@@ -362,7 +376,10 @@ function CashierPos() {
                   {image ? <img src={image} alt="" loading="lazy" className="h-[46%] w-full shrink-0 object-cover" /> : <div className="flex h-[46%] shrink-0 items-center justify-center bg-muted text-4xl">{s(p["emoji"]) || "🍽️"}</div>}
                   <div className="flex min-h-0 flex-1 flex-col justify-between p-3">
                     <div className="line-clamp-2 break-words text-sm leading-tight font-semibold">{s(p["name"])}</div>
-                    <div className="mt-1 text-sm font-bold text-primary tnum">{formatKzt(n(p["price"]))}</div>
+                    <div className="mt-1 text-sm font-bold text-primary tnum">
+                      {formatKzt(n(p["price"]))}
+                      {isWeight(p) ? <span className="text-xs font-normal"> /кг</span> : null}
+                    </div>
                   </div>
                   {out ? <span className="absolute top-2 left-2 rounded bg-background px-2 py-1 text-xs text-destructive">Нет в наличии</span> : null}
                 </Button>
@@ -372,7 +389,7 @@ function CashierPos() {
         </section>
 
         <aside aria-label="Текущий заказ" className="flex min-h-0 min-w-0 flex-col border border-border bg-card lg:overflow-hidden">
-          <h2 className="shrink-0 border-b border-border px-4 py-3 text-lg font-semibold">Чек <span className="ml-2 text-sm font-normal text-muted-foreground">{lines.reduce((sum, line) => sum + line.qty, 0)} поз.</span></h2>
+          <h2 className="shrink-0 border-b border-border px-4 py-3 text-lg font-semibold">Чек <span className="ml-2 text-sm font-normal text-muted-foreground">{lines.length} поз.</span></h2>
           <div className="min-h-0 flex-1 p-4 lg:overflow-y-auto lg:overscroll-contain">
           <div className="grid gap-2">
             {lines.length === 0 && <p className="text-sm text-muted-foreground">Корзина пуста</p>}
@@ -397,21 +414,25 @@ function CashierPos() {
                     onClick={() =>
                       setLines((prev) =>
                         prev
-                          .map((x) => (x.key === l.key ? { ...x, qty: x.qty - 1 } : x))
+                          .map((x) =>
+                            x.key === l.key ? { ...x, qty: x.qty - (x.byWeight ? 0.05 : 1) } : x,
+                          )
                           .filter((x) => x.qty > 0),
                       )
                     }
                   >
                     <Minus className="size-4" />
                   </Button>
-                  <span className="w-8 text-center">{l.qty}</span>
+                  <span className="w-14 text-center text-sm tnum">{l.byWeight ? formatKg(l.qty) : l.qty}</span>
                   <Button
                     size="icon"
                     variant="secondary"
                     aria-label={`Увеличить количество: ${l.name}`}
                     onClick={() =>
                       setLines((prev) =>
-                        prev.map((x) => (x.key === l.key ? { ...x, qty: x.qty + 1 } : x)),
+                        prev.map((x) =>
+                          x.key === l.key ? { ...x, qty: x.qty + (x.byWeight ? 0.05 : 1) } : x,
+                        ),
                       )
                     }
                   >
@@ -591,6 +612,43 @@ function CashierPos() {
                 .map((m) => ({ id: s(m["id"]), name: s(m["name"]), price: n(m["price"]) }));
               addProduct(modProduct, picked);
               setModProduct(null);
+            }}
+          >
+            Добавить в чек
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!weightProduct} onOpenChange={(o) => !o && setWeightProduct(null)}>
+        <DialogContent className="max-h-[92dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{s(weightProduct?.["name"])}: вес</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Цена за кг: {formatKzt(n(weightProduct?.["price"]))}
+          </p>
+          <div className="rounded-lg bg-muted p-3 text-center">
+            <div className="text-3xl font-bold tnum">{formatKg(weightGrams / 1000)}</div>
+            <div className="mt-1 text-lg font-semibold text-primary tnum">
+              {formatKzt(Math.round((n(weightProduct?.["price"]) * weightGrams) / 1000))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[100, 250, 500, 1000].map((g) => (
+              <Button key={g} size="sm" variant="secondary" onClick={() => setWeightGrams(g)}>
+                {g >= 1000 ? "1 кг" : `${g} г`}
+              </Button>
+            ))}
+          </div>
+          <NumPad value={weightGrams} onChange={setWeightGrams} />
+          <Button
+            size="lg"
+            disabled={weightGrams <= 0}
+            onClick={() => {
+              if (!weightProduct) return;
+              addProduct(weightProduct, [], Math.round(weightGrams) / 1000);
+              setWeightProduct(null);
+              setWeightGrams(0);
             }}
           >
             Добавить в чек
