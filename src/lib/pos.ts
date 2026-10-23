@@ -4,6 +4,11 @@ export function formatKzt(value: number): string {
   return `${Math.round(value).toLocaleString("ru-RU").replace(/\u00A0/g, " ")} ${CURRENCY}`;
 }
 
+export function formatKg(qty: number): string {
+  if (Number.isInteger(qty)) return `${qty} кг`;
+  return `${qty.toFixed(3).replace(".", ",").replace(/0+$/, "").replace(/,$/, "")} кг`;
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("ru-RU", {
     day: "2-digit",
@@ -44,6 +49,7 @@ export type CartLine = {
   imageUrl: string | null;
   modifiers: CartModifier[];
   trackStock: boolean;
+  byWeight?: boolean;
 };
 
 export function lineTotal(line: CartLine): number {
