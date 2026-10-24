@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Printer, RotateCcw } from "lucide-react";
+import { Printer, RotateCcw, Pencil } from "lucide-react";
+import { isSale, salesRange, salesTotals } from "@/lib/sales";
+import { PaymentCorrection } from "@/components/pos/PaymentCorrection";
 import { supabase } from "@/integrations/supabase/client";
 import {
   employeesQuery,
@@ -40,20 +42,11 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: OrdersPage,
 });
 
-function rangeFor(period: "today" | "week" | "month") {
-  const to = new Date();
-  const from = new Date();
-  if (period === "today") from.setHours(0, 0, 0, 0);
-  if (period === "week") from.setDate(from.getDate() - 7);
-  if (period === "month") from.setDate(from.getDate() - 30);
-  return { from: from.toISOString(), to: to.toISOString() };
-}
-
 function OrdersPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"orders" | "shifts">("orders");
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const { from, to } = useMemo(() => rangeFor(period), [period]);
+  const { from, to } = salesRange(period);
 
   const orders = useQuery(ordersQuery(from, to));
   const employees = useQuery(employeesQuery);
@@ -62,6 +55,7 @@ function OrdersPage() {
 
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [shiftReport, setShiftReport] = useState<string | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
 
   const employeeName = (id: string | null) =>
     (employees.data ?? []).find((e) => e.id === id)?.name ?? "—";
@@ -151,6 +145,7 @@ function OrdersPage() {
 
       {tab === "orders" && (
         <>
+          {orders.isError && <p role="alert" className="text-destructive">{orders.error.message}</p>}
           <div className="flex flex-wrap gap-2">
             {(
               [
@@ -211,6 +206,7 @@ function OrdersPage() {
                     </td>
                     <td className="p-3">
                       <div className="flex justify-end gap-2">
+                        {isSale(o.status) && <Button size="sm" variant="secondary" title="Изменить способ оплаты" aria-label={`Изменить оплату чека №${o.order_no}`} onClick={() => setPaymentOrder(o)}><Pencil className="size-4" /></Button>}
                         <Button size="sm" variant="secondary" onClick={() => openReceipt.mutate(o)}>
                           <Printer className="size-4" />
                         </Button>
@@ -296,6 +292,7 @@ function OrdersPage() {
         onClose={() => setShiftReport(null)}
         employeeName={employeeName}
       />
+      {paymentOrder && <PaymentCorrection key={paymentOrder.id} order={paymentOrder} onClose={() => setPaymentOrder(null)} />}
     </div>
   );
 }
@@ -316,19 +313,30 @@ function ShiftReportDialog({
     queryKey: ["shift-report", shiftId],
     enabled: !!shiftId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("orders").select("*").eq("shift_id", shiftId!);
-      if (error) throw new Error(error.message);
-      return (data ?? []) as Order[];
+      if (!shiftId) return { orders: [] as Order[], ops: [] as { type: string; amount: number }[] };
+      const rows: Order[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const { data, error } = await supabase.from("orders").select("*").eq("shift_id", shiftId).order("id").range(offset, offset + 499);
+        if (error) throw new Error(error.message);
+        rows.push(...(data ?? []));
+        if ((data ?? []).length < 500) break;
+      }
+      const ops: { type: string; amount: number }[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const { data, error } = await supabase.from("cash_operations").select("type, amount, id").eq("shift_id", shiftId).order("id").range(offset, offset + 499);
+        if (error) throw new Error(error.message);
+        ops.push(...(data ?? []));
+        if ((data ?? []).length < 500) break;
+      }
+      return { orders: rows, ops };
     },
   });
 
   const dead = ["refunded", "cancelled"];
-  const paid = (report.data ?? []).filter((o) => !dead.includes(o.status));
-  const refunded = (report.data ?? []).filter((o) => dead.includes(o.status));
-  const cash = paid.reduce((s, o) => s + o.cash_amount, 0);
-  const card = paid.reduce((s, o) => s + o.card_amount, 0);
-  const revenue = paid.reduce((s, o) => s + o.total, 0);
-  const expected = (shift?.cash_start ?? 0) + cash;
+  const paid = (report.data?.orders ?? []).filter((o) => isSale(o.status));
+  const refunded = (report.data?.orders ?? []).filter((o) => dead.includes(o.status));
+  const { cash, card, revenue, cashIn, cashOut } = salesTotals(report.data?.orders ?? [], report.data?.ops ?? []);
+  const expected = (shift?.cash_start ?? 0) + cash + cashIn - cashOut;
   const diff = shift?.cash_end == null ? null : shift.cash_end - expected;
 
   return (
@@ -337,7 +345,9 @@ function ShiftReportDialog({
         <DialogHeader>
           <DialogTitle>{shift?.status === "open" ? "X-отчёт (без закрытия)" : "Z-отчёт смены"}</DialogTitle>
         </DialogHeader>
-        {shift && (
+        {report.isError && <p role="alert" className="text-destructive">{report.error.message}</p>}
+        {report.isPending && <p className="text-muted-foreground">Загрузка отчёта…</p>}
+        {shift && report.isSuccess && (
           <div className="space-y-2 text-sm">
             <Row label="Кассир" value={employeeName(shift.employee_id)} />
             <Row label="Открыта" value={formatTime(shift.opened_at)} />
@@ -346,8 +356,10 @@ function ShiftReportDialog({
             <Row label="Чеков" value={String(paid.length)} />
             <Row label="Возвратов" value={String(refunded.length)} />
             <Row label="Выручка" value={formatKzt(revenue)} />
-            <Row label={PAYMENT_LABELS['cash']!} value={formatKzt(cash)} />
-            <Row label={PAYMENT_LABELS['card']!} value={formatKzt(card)} />
+            <Row label={PAYMENT_LABELS['cash'] ?? "Наличные"} value={formatKzt(cash)} />
+            <Row label={PAYMENT_LABELS['card'] ?? "Карта"} value={formatKzt(card)} />
+            <Row label="Внесения" value={formatKzt(cashIn)} />
+            <Row label="Изъятия" value={formatKzt(cashOut)} />
             <hr className="border-border" />
             <Row label="Касса на начало" value={formatKzt(shift.cash_start)} />
             <Row label="Наличных должно быть" value={formatKzt(expected)} />

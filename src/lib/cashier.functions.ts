@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { isSale } from "@/lib/sales";
 
 /**
  * Все действия кассы. Кассир не является пользователем базы: он входит по PIN,
@@ -240,7 +241,7 @@ async function shiftTotals(shiftId: string) {
   ]);
 
   const paid = (orders ?? []).filter(
-    (o: Record<string, unknown>) => o["status"] !== "cancelled",
+    (o: Record<string, unknown>) => isSale(String(o["status"])),
   );
   const sum = (key: string) =>
     paid.reduce((acc: number, o: Record<string, unknown>) => acc + Number(o[key] ?? 0), 0);

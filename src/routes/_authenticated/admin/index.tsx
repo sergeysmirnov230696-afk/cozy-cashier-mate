@@ -8,6 +8,7 @@ import {
 } from "@/lib/pos-queries";
 import { formatKzt, PAYMENT_LABELS } from "@/lib/pos";
 import { Button } from "@/components/ui/button";
+import { isSale, salesRange } from "@/lib/sales";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
@@ -26,33 +27,24 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   component: Reports,
 });
 
-function rangeFor(period: "today" | "week" | "month") {
-  const to = new Date();
-  const from = new Date();
-  if (period === "today") from.setHours(0, 0, 0, 0);
-  if (period === "week") from.setDate(from.getDate() - 7);
-  if (period === "month") from.setDate(from.getDate() - 30);
-  return { from: from.toISOString(), to: to.toISOString() };
-}
-
 function Reports() {
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const { from, to } = useMemo(() => rangeFor(period), [period]);
+  const { from, to } = salesRange(period);
   const orders = useQuery(ordersQuery(from, to));
   const items = useQuery(orderItemsQuery(from, to));
   const employees = useQuery(employeesQuery);
 
-  const paid = (orders.data ?? []).filter((o) => o.status === "paid");
+  const paid = (orders.data ?? []).filter((o) => isSale(o.status));
   const revenue = paid.reduce((s, o) => s + o.total, 0);
   const avg = paid.length ? Math.round(revenue / paid.length) : 0;
   const cash = paid.reduce((s, o) => s + o.cash_amount, 0);
   const card = paid.reduce((s, o) => s + o.card_amount, 0);
-  const refunds = (orders.data ?? []).filter((o) => o.status === "refunded");
+  const refunds = (orders.data ?? []).filter((o) => o.status === "refunded" || o.status === "cancelled");
 
   const top = useMemo(() => {
     const map = new Map<string, { name: string; qty: number; sum: number }>();
     for (const i of items.data ?? []) {
-      if (i.orders?.status !== "paid") continue;
+      if (!isSale(i.orders?.status ?? "")) continue;
       const cur = map.get(i.name) ?? { name: i.name, qty: 0, sum: 0 };
       cur.qty += Number(i.qty);
       cur.sum += i.total;
@@ -96,13 +88,15 @@ function Reports() {
         ))}
       </div>
 
+      {(orders.isError || items.isError || employees.isError) && <p role="alert" className="text-destructive">Не удалось загрузить отчёт. {orders.error?.message ?? items.error?.message ?? employees.error?.message}</p>}
+      {(orders.isPending || items.isPending) && <p className="text-muted-foreground">Загрузка отчёта…</p>}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Выручка" value={formatKzt(revenue)} />
         <Stat label="Чеков" value={String(paid.length)} />
         <Stat label="Средний чек" value={formatKzt(avg)} />
-        <Stat label="Возвраты" value={String(refunds.length)} />
-        <Stat label={PAYMENT_LABELS['cash']!} value={formatKzt(cash)} />
-        <Stat label={PAYMENT_LABELS['card']!} value={formatKzt(card)} />
+        <Stat label="Возвраты и отмены" value={String(refunds.length)} />
+        <Stat label={PAYMENT_LABELS['cash'] ?? "Наличные"} value={formatKzt(cash)} />
+        <Stat label={PAYMENT_LABELS['card'] ?? "Карта"} value={formatKzt(card)} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

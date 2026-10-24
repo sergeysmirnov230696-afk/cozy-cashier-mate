@@ -74,29 +74,40 @@ export const shiftsQuery = queryOptions({
 export function ordersQuery(from: string, to: string) {
   return queryOptions({
     queryKey: ["orders", from, to],
-    queryFn: () =>
-      unwrap<Order[]>(
-        supabase
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const rows: Order[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const page = await unwrap<Order[]>(supabase
           .from("orders")
           .select("*")
           .gte("created_at", from)
-          .lte("created_at", to)
-          .order("created_at", { ascending: false }),
-      ),
+          .lt("created_at", to)
+          .order("created_at", { ascending: false }).order("id")
+          .range(offset, offset + 499));
+        rows.push(...page);
+        if (page.length < 500) return rows;
+      }
+    },
   });
 }
 
 export function orderItemsQuery(from: string, to: string) {
   return queryOptions({
     queryKey: ["order_items", from, to],
+    refetchInterval: 15000,
     queryFn: async () => {
+      const rows: (OrderItem & { orders: { created_at: string; status: string } })[] = [];
+      for (let offset = 0; ; offset += 500) {
       const { data, error } = await supabase
         .from("order_items")
         .select("*, orders!inner(created_at, status)")
         .gte("orders.created_at", from)
-        .lte("orders.created_at", to);
+        .lt("orders.created_at", to).order("id").range(offset, offset + 499);
       if (error) throw new Error(error.message);
-      return (data ?? []) as (OrderItem & { orders: { created_at: string; status: string } })[];
+      rows.push(...(data ?? []));
+      if ((data ?? []).length < 500) return rows;
+      }
     },
   });
 }

@@ -684,6 +684,55 @@ export type Database = {
     }
     Functions: {
       close_expired_shifts: { Args: never; Returns: number }
+      correct_order_payment: {
+        Args: {
+          p_card: number
+          p_expected: Json
+          p_method: string
+          p_order_id: string
+          p_received: number
+        }
+        Returns: {
+          bonus_earned: number
+          bonus_used: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          card_amount: number
+          cash_amount: number
+          cash_received: number
+          change_given: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          daily_no: number | null
+          discount: number
+          employee_id: string | null
+          fiscal_check_url: string | null
+          fiscal_error: string | null
+          fiscal_number: string | null
+          fiscal_status: string
+          id: string
+          kaspi_txn_id: string | null
+          note: string | null
+          order_no: number
+          order_type: string
+          payment_method: string
+          shift_id: string | null
+          status: string
+          subtotal: number
+          total: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
