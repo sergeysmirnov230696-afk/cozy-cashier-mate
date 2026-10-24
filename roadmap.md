@@ -1,6 +1,7 @@
 # Tasks
-- [ ] Fix admin sales and shift reports using actual payment/status accounting.
-- [ ] Allow administrators to correct a receipt payment method and verify saved results.
+- [x] Fix admin sales and shift accounting; six calculation tests pass.
+- [x] Add transactional, role-checked payment correction with audit and shift recalculation.
+- [ ] Verify payment correction and report readback signed in: waiting for the user to sign in to the preview (no account matches requesting user for session minting).
 - [ ] Весовые товары (кг): модальное окно с цифровой клавиатурой для ввода веса.
 - [x] Adapt dark cashier layout for desktop with fixed order panel and independently scrolling square dish tiles.
 - [x] Verify cashier interactions and desktop/mobile layout.
