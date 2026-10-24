@@ -176,3 +176,9 @@
     page-break-after: auto;
   }
 }
+
+
+/* Hide the Edit with Lovable badge */
+#lovable-badge {
+  display: none !important;
+}
