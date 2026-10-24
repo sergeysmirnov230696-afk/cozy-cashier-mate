@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Add arbitrary inclusive date selection to admin reports and receipt history; verify date rules.
 - [x] Fix admin sales and shift accounting; six calculation tests pass.
 - [x] Add transactional, role-checked payment correction with audit and shift recalculation.
 - [ ] Verify payment correction and report readback signed in: waiting for the user to sign in to the preview (no account matches requesting user for session minting).

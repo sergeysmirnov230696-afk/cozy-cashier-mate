@@ -1,5 +1,19 @@
 export type SalesPeriod = "today" | "week" | "month";
 
+export function customSalesRange(startDate: string, endDate: string) {
+  function midnight(date: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Выберите обе даты");
+    const utc = new Date(`${date}T00:00:00.000Z`);
+    if (!Number.isFinite(utc.getTime()) || utc.toISOString().slice(0, 10) !== date)
+      throw new Error("Некорректная дата");
+    return utc.getTime() - 5 * 60 * 60 * 1000;
+  }
+  const start = midnight(startDate);
+  const end = midnight(endDate);
+  if (start > end) throw new Error("Дата начала должна быть не позже даты окончания");
+  return { from: new Date(start).toISOString(), to: new Date(end + 86400000).toISOString() };
+}
+
 export function isSale(status: string) {
   return ["open", "completed", "paid"].includes(status);
 }

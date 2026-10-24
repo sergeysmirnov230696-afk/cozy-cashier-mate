@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { isSale, paymentSplit, salesRange, salesTotals } from "./sales";
+import { customSalesRange, isSale, paymentSplit, salesRange, salesTotals } from "./sales";
 
 describe("sales accounting", () => {
+  it("includes both dates in any custom period without a 30-day cap", () => {
+    expect(customSalesRange("2025-01-01", "2026-10-24")).toEqual({ from: "2024-12-31T19:00:00.000Z", to: "2026-10-24T19:00:00.000Z" });
+  });
+  it("supports a single selected day", () => {
+    expect(customSalesRange("2026-10-24", "2026-10-24")).toEqual(salesRange("today", new Date("2026-10-24T08:01:00Z")));
+  });
+  it("rejects reversed or invalid date ranges", () => {
+    expect(() => customSalesRange("2026-10-24", "2026-10-23")).toThrow();
+    expect(() => customSalesRange("", "2026-10-24")).toThrow();
+    expect(() => customSalesRange("2026-02-30", "2026-10-24")).toThrow();
+  });
   it("counts paid orders before and after fulfilment, excluding reversals", () => {
     const orders = ["open", "completed", "paid", "cancelled", "refunded"].map((status) => ({ status, total: 1500, cash_amount: 1000, card_amount: 500 }));
     expect(salesTotals(orders)).toMatchObject({ count: 3, revenue: 4500, cash: 3000, card: 1500 });
