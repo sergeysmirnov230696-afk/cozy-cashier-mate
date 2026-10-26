@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { enqueueOrder, getQueue, isNetworkError, loadCatalog, removeQueued, saveCatalog, type QueuedOrder } from "@/lib/offline-queue";
+import type { CreateOrderInputLike } from "@/lib/offline-types";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -103,7 +105,17 @@ function CashierPos() {
 
   const pos = useQuery({
     queryKey: ["cashier", "pos-data"],
-    queryFn: () => load(),
+    queryFn: async () => {
+      try {
+        const d = await load();
+        saveCatalog(d);
+        return d;
+      } catch (e) {
+        const cached = loadCatalog<Awaited<ReturnType<typeof load>>>();
+        if (cached && isNetworkError(e)) return cached;
+        throw e;
+      }
+    },
     enabled: !!cashier.data,
     refetchInterval: 60_000,
   });
@@ -218,28 +230,93 @@ function CashierPos() {
     },
   });
 
+  function buildPayload(): CreateOrderInputLike {
+    return {
+      lines: lines.map((l) => ({
+        productId: l.productId,
+        qty: l.qty,
+        modifierIds: l.modifiers.map((m) => m.id),
+      })),
+      discountPercent,
+      discountAmount,
+      paymentMethod: method,
+      cashReceived: method === "card" ? 0 : cashReceived,
+      cardAmount: method === "mixed" ? cardAmount : method === "card" ? total : 0,
+      orderType,
+      ...(customer && s(customer["name"]) ? { customerName: s(customer["name"]) } : {}),
+      ...(phone ? { customerPhone: phone } : {}),
+      ...(note ? { note } : {}),
+      bonusUsed: bonus,
+    };
+  }
+
+  function offlineReceipt(q: QueuedOrder): ReceiptPayload {
+    const p = q.payload;
+    const cashAmount = p.paymentMethod === "card" ? 0 : total - (p.paymentMethod === "mixed" ? p.cardAmount : 0);
+    return {
+      orderId: q.localId,
+      orderNo: q.localNo,
+      dailyNo: q.localNo,
+      createdAt: q.createdAt,
+      status: "open",
+      orderType: orderType,
+      cashierName: s(cashier.data?.name) || "Кассир",
+      customerName: p.customerName ?? null,
+      customerPhone: p.customerPhone ?? null,
+      note: `ОФЛАЙН-заказ О-${q.localNo}. ${p.note ?? ""}`.trim(),
+      items: lines.map((l) => ({
+        name: l.name,
+        qty: l.qty,
+        price: l.price + l.modifiers.reduce((a, m) => a + m.price, 0),
+        total: lineTotal(l),
+        modifiers: l.modifiers.map((m) => ({ name: m.name, price: m.price })),
+      })),
+      subtotal,
+      discount: discount + bonus,
+      total,
+      paymentMethod: method,
+      cashAmount,
+      cardAmount: p.cardAmount,
+      cashReceived: p.cashReceived,
+      changeGiven: change,
+      bonusEarned: 0,
+      bonusUsed: bonus,
+      fiscalNumber: null,
+      fiscalCheckUrl: null,
+      shop: {
+        name: s(settings?.["shop_name"]) || "Гриль & Донер",
+        address: s(settings?.["address"]),
+        phone: s(settings?.["phone"]),
+        footer: s(settings?.["receipt_footer"]),
+        vatPercent: n(settings?.["vat_percent"]),
+      },
+    };
+  }
+
+  function saveOffline(payload: CreateOrderInputLike) {
+    const q = enqueueOrder(payload);
+    setReceipt(offlineReceipt(q));
+    setPayOpen(false);
+    resetCart();
+    toast.warning(`Нет связи — заказ О-${q.localNo} сохранён и отправится автоматически`);
+  }
+
   const payM = useMutation({
-    mutationFn: () =>
-      submit({
-        data: {
-          lines: lines.map((l) => ({
-            productId: l.productId,
-            qty: l.qty,
-            modifierIds: l.modifiers.map((m) => m.id),
-          })),
-          discountPercent,
-          discountAmount,
-          paymentMethod: method,
-          cashReceived: method === "card" ? 0 : cashReceived,
-          cardAmount: method === "mixed" ? cardAmount : method === "card" ? total : 0,
-          orderType,
-          ...(customer && s(customer["name"]) ? { customerName: s(customer["name"]) } : {}),
-          ...(phone ? { customerPhone: phone } : {}),
-          ...(note ? { note } : {}),
-          bonusUsed: bonus,
-        },
-      }),
-    onSuccess: (res) => {
+    mutationFn: async () => {
+      const payload = buildPayload();
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return { offline: true as const, payload };
+      }
+      try {
+        return { offline: false as const, res: await submit({ data: payload as never }) };
+      } catch (e) {
+        if (isNetworkError(e)) return { offline: true as const, payload };
+        throw e;
+      }
+    },
+    onSuccess: (r) => {
+      if (r.offline) { saveOffline(r.payload); return; }
+      const res = r.res;
       if (!res.ok) { toast.error(res.message); return; }
       setReceipt(res.receipt);
       setPayOpen(false);
@@ -249,6 +326,53 @@ function CashierPos() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Отправка офлайн-заказов при появлении связи
+  const [online, setOnline] = useState(true);
+  const [queued, setQueued] = useState(0);
+  const syncing = useRef(false);
+  useEffect(() => {
+    const refresh = () => { setQueued(getQueue().length); setOnline(navigator.onLine); };
+    async function sync() {
+      refresh();
+      if (syncing.current || !navigator.onLine) return;
+      syncing.current = true;
+      let sent = 0;
+      try {
+        for (const q of getQueue()) {
+          try {
+            const res = await submit({ data: q.payload as never });
+            if (res.ok) sent++;
+            else toast.error(`Офлайн-заказ О-${q.localNo} отклонён: ${res.message}`);
+            removeQueued(q.localId);
+          } catch (e) {
+            if (isNetworkError(e)) break;
+            toast.error(`Офлайн-заказ О-${q.localNo}: ${(e as Error).message}`);
+            break;
+          }
+        }
+      } finally {
+        syncing.current = false;
+        refresh();
+      }
+      if (sent) {
+        toast.success(`Отправлено офлайн-заказов: ${sent}`);
+        qc.invalidateQueries({ queryKey: ["cashier"] });
+      }
+    }
+    refresh();
+    void sync();
+    const t = setInterval(() => void sync(), 20_000);
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", refresh);
+    window.addEventListener("pos-queue-changed", refresh);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", refresh);
+      window.removeEventListener("pos-queue-changed", refresh);
+    };
+  }, [submit, qc]);
 
   const printCashier = settings?.["print_cashier_receipt"] !== false;
   const printCustomer = settings?.["print_customer_receipt"] !== false;
