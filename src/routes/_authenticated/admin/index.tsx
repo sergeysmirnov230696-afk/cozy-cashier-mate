@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 function Reports() {
-  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const { from, to } = salesRange(period);
+  const selection = useReportPeriod();
+  const { from, to } = selection.range;
   const orders = useQuery(ordersQuery(from, to));
   const items = useQuery(orderItemsQuery(from, to));
   const employees = useQuery(employeesQuery);
