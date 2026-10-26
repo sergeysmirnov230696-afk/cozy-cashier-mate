@@ -3,8 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Printer, RotateCcw, Pencil } from "lucide-react";
-import { isSale, salesRange, salesTotals } from "@/lib/sales";
+import { isSale, salesTotals } from "@/lib/sales";
 import { PaymentCorrection } from "@/components/pos/PaymentCorrection";
+import { ReportPeriod, useReportPeriod } from "@/components/pos/ReportPeriod";
 import { supabase } from "@/integrations/supabase/client";
 import {
   employeesQuery,
