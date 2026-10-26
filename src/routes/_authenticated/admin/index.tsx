@@ -70,23 +70,8 @@ function Reports() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-2xl font-bold">Отчёты</h1>
-        {(
-          [
-            ["today", "Сегодня"],
-            ["week", "7 дней"],
-            ["month", "30 дней"],
-          ] as const
-        ).map(([k, label]) => (
-          <Button
-            key={k}
-            size="sm"
-            variant={period === k ? "default" : "secondary"}
-            onClick={() => setPeriod(k)}
-          >
-            {label}
-          </Button>
-        ))}
       </div>
+      <ReportPeriod selection={selection} />
 
       {(orders.isError || items.isError || employees.isError) && <p role="alert" className="text-destructive">Не удалось загрузить отчёт. {orders.error?.message ?? items.error?.message ?? employees.error?.message}</p>}
       {(orders.isPending || items.isPending) && <p className="text-muted-foreground">Загрузка отчёта…</p>}
