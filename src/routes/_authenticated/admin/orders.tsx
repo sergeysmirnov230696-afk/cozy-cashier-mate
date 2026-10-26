@@ -147,24 +147,7 @@ function OrdersPage() {
       {tab === "orders" && (
         <>
           {orders.isError && <p role="alert" className="text-destructive">{orders.error.message}</p>}
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["today", "Сегодня"],
-                ["week", "7 дней"],
-                ["month", "30 дней"],
-              ] as const
-            ).map(([k, label]) => (
-              <Button
-                key={k}
-                size="sm"
-                variant={period === k ? "default" : "secondary"}
-                onClick={() => setPeriod(k)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
+          <ReportPeriod selection={selection} />
 
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
