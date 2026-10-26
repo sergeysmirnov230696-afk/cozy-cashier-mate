@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -7,8 +7,8 @@ import {
   ordersQuery,
 } from "@/lib/pos-queries";
 import { formatKzt, PAYMENT_LABELS } from "@/lib/pos";
-import { Button } from "@/components/ui/button";
-import { isSale, salesRange } from "@/lib/sales";
+import { ReportPeriod, useReportPeriod } from "@/components/pos/ReportPeriod";
+import { isSale } from "@/lib/sales";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 });
 
 function Reports() {
-  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const { from, to } = salesRange(period);
+  const selection = useReportPeriod();
+  const { from, to } = selection.range;
   const orders = useQuery(ordersQuery(from, to));
   const items = useQuery(orderItemsQuery(from, to));
   const employees = useQuery(employeesQuery);
@@ -70,23 +70,8 @@ function Reports() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-2xl font-bold">Отчёты</h1>
-        {(
-          [
-            ["today", "Сегодня"],
-            ["week", "7 дней"],
-            ["month", "30 дней"],
-          ] as const
-        ).map(([k, label]) => (
-          <Button
-            key={k}
-            size="sm"
-            variant={period === k ? "default" : "secondary"}
-            onClick={() => setPeriod(k)}
-          >
-            {label}
-          </Button>
-        ))}
       </div>
+      <ReportPeriod selection={selection} />
 
       {(orders.isError || items.isError || employees.isError) && <p role="alert" className="text-destructive">Не удалось загрузить отчёт. {orders.error?.message ?? items.error?.message ?? employees.error?.message}</p>}
       {(orders.isPending || items.isPending) && <p className="text-muted-foreground">Загрузка отчёта…</p>}

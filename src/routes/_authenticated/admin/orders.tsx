@@ -3,8 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Printer, RotateCcw, Pencil } from "lucide-react";
-import { isSale, salesRange, salesTotals } from "@/lib/sales";
+import { isSale, salesTotals } from "@/lib/sales";
 import { PaymentCorrection } from "@/components/pos/PaymentCorrection";
+import { ReportPeriod, useReportPeriod } from "@/components/pos/ReportPeriod";
 import { supabase } from "@/integrations/supabase/client";
 import {
   employeesQuery,
@@ -45,8 +46,8 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 function OrdersPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"orders" | "shifts">("orders");
-  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const { from, to } = salesRange(period);
+  const selection = useReportPeriod();
+  const { from, to } = selection.range;
 
   const orders = useQuery(ordersQuery(from, to));
   const employees = useQuery(employeesQuery);
@@ -146,24 +147,7 @@ function OrdersPage() {
       {tab === "orders" && (
         <>
           {orders.isError && <p role="alert" className="text-destructive">{orders.error.message}</p>}
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["today", "Сегодня"],
-                ["week", "7 дней"],
-                ["month", "30 дней"],
-              ] as const
-            ).map(([k, label]) => (
-              <Button
-                key={k}
-                size="sm"
-                variant={period === k ? "default" : "secondary"}
-                onClick={() => setPeriod(k)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
+          <ReportPeriod selection={selection} />
 
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
