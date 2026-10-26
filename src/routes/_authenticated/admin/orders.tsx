@@ -46,8 +46,8 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 function OrdersPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"orders" | "shifts">("orders");
-  const [period, setPeriod] = useState<"today" | "week" | "month">("today");
-  const { from, to } = salesRange(period);
+  const selection = useReportPeriod();
+  const { from, to } = selection.range;
 
   const orders = useQuery(ordersQuery(from, to));
   const employees = useQuery(employeesQuery);
