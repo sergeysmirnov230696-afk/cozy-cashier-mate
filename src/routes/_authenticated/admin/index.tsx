@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -7,8 +7,8 @@ import {
   ordersQuery,
 } from "@/lib/pos-queries";
 import { formatKzt, PAYMENT_LABELS } from "@/lib/pos";
-import { Button } from "@/components/ui/button";
-import { isSale, salesRange } from "@/lib/sales";
+import { ReportPeriod, useReportPeriod } from "@/components/pos/ReportPeriod";
+import { isSale } from "@/lib/sales";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
