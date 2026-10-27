@@ -23,6 +23,7 @@ export type ReceiptItem = {
 
 export type ReceiptPayload = {
   orderId: string;
+  offlineNo?: number;
   orderNo: number;
   dailyNo: number;
   createdAt: string;
@@ -368,6 +369,11 @@ export const findCustomer = createServerFn({ method: "POST" })
   });
 
 type CreateOrderInput = {
+  clientOrderId?: string;
+  employeeId?: string;
+  shiftId?: string;
+  soldAt?: string;
+  expectedTotal?: number;
   lines: CartLineInput[];
   discountPercent?: number;
   discountAmount?: number;
@@ -394,8 +400,22 @@ export const createOrder = createServerFn({ method: "POST" })
       "@/lib/cashier.server"
     );
     const cashier = await requireCashier();
+    if (data.clientOrderId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.clientOrderId))
+      return { ok: false, message: "Некорректный номер офлайн-заказа" };
+    if (data.employeeId && data.employeeId !== cashier.id)
+      return { ok: false, message: "Войдите как кассир, принявший этот заказ" };
+    if (data.clientOrderId) {
+      const { data: existing, error: lookupError } = await db.from("orders").select("employee_id, client_receipt").eq("client_order_id", data.clientOrderId).maybeSingle();
+      if (lookupError) throw new Error(lookupError.message);
+      if (existing) {
+        if (existing.employee_id !== cashier.id) return { ok: false, message: "Заказ другого кассира" };
+        return { ok: true, receipt: existing.client_receipt as ReceiptPayload };
+      }
+    }
     const shift = await openShiftRow();
     if (!shift) return { ok: false, message: "Сначала откройте смену" };
+    if (data.shiftId && data.shiftId !== String(shift.id))
+      return { ok: false, message: "Исходная смена закрыта. Заказ сохранён на кассе — требуется разбор администратором" };
     if (!data.lines.length) return { ok: false, message: "Корзина пуста" };
 
     const productIds = [...new Set(data.lines.map((l) => l.productId))];
@@ -471,6 +491,8 @@ export const createOrder = createServerFn({ method: "POST" })
     else bonusUsed = Math.min(bonusUsed, Number(customer["bonus"] ?? 0), subtotal - discount);
 
     const total = Math.max(0, subtotal - discount - bonusUsed);
+    if (data.expectedTotal !== undefined && data.expectedTotal !== total)
+      return { ok: false, message: "Цена или бонусы изменились. Заказ сохранён — требуется проверка суммы" };
 
     const cashReceived = Math.max(0, Math.round(data.cashReceived ?? 0));
     const cardAmount =
@@ -487,9 +509,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const bonusPercent = Number(settings?.bonus_percent ?? 0);
     const bonusEarned = customer && bonusPercent > 0 ? Math.floor((total * bonusPercent) / 100) : 0;
 
-    const { data: order, error } = await db
-      .from("orders")
-      .insert({
+    const orderRow = {
         shift_id: shift.id,
         employee_id: cashier.id,
         subtotal,
@@ -508,13 +528,8 @@ export const createOrder = createServerFn({ method: "POST" })
         bonus_earned: bonusEarned,
         bonus_used: bonusUsed,
         note: data.note || null,
-      })
-      .select("*")
-      .single();
-
-    if (error || !order) return { ok: false, message: error?.message ?? "Не удалось создать заказ" };
-
-    await db.from("order_items").insert(itemRows.map((r) => ({ ...r, order_id: order.id })));
+        ...(data.soldAt ? { created_at: data.soldAt } : {}),
+      };
 
     // Списание остатков по товарам с учётом склада
     const stockRows = data.lines
@@ -527,29 +542,23 @@ export const createOrder = createServerFn({ method: "POST" })
             ? -Math.round(line.qty * 1000) / 1000
             : -Math.max(1, Math.round(line.qty)),
         type: "sale",
-        note: `Заказ №${order.daily_no}`,
       }));
-    if (stockRows.length) await db.from("stock_movements").insert(stockRows);
 
-    if (customer) {
-      await db
-        .from("customers")
-        .update({
-          bonus: Number(customer["bonus"] ?? 0) - bonusUsed + bonusEarned,
-          visits: Number(customer["visits"] ?? 0) + 1,
-          total_spent: Number(customer["total_spent"] ?? 0) + total,
-          name: data.customerName || String(customer["name"] ?? ""),
-        })
-        .eq("id", customer["id"]);
-    } else if (phone.length >= 5) {
-      await db.from("customers").insert({
-        phone,
-        name: data.customerName || "",
-        visits: 1,
-        total_spent: total,
-        bonus: bonusEarned,
-      });
-    }
+    const receiptBase = {
+      status: "open", orderType: data.orderType, cashierName: cashier.name,
+      customerName: data.customerName || null, customerPhone: phone || null, note: data.note || null,
+      items, subtotal, discount: discount + bonusUsed, total, paymentMethod: data.paymentMethod,
+      cashAmount, cardAmount, cashReceived, changeGiven, bonusEarned, bonusUsed,
+      fiscalNumber: null, fiscalCheckUrl: null,
+      shop: { name: String(settings?.shop_name ?? "Гриль & Донер"), address: String(settings?.address ?? ""), phone: String(settings?.phone ?? ""), footer: String(settings?.receipt_footer ?? ""), vatPercent: Number(settings?.vat_percent ?? 0) },
+    };
+    const { data: committed, error } = await db.rpc("commit_cashier_sale", {
+      p_key: data.clientOrderId ?? null, p_order: orderRow, p_items: itemRows,
+      p_stock: stockRows, p_customer: { name: data.customerName || null }, p_receipt: receiptBase,
+    });
+    if (error || !committed) return { ok: false, message: error?.message ?? "Не удалось создать заказ" };
+    const receipt = committed.receipt as ReceiptPayload;
+    if (committed.replay) return { ok: true, receipt };
 
     // Фискализация через Kaspi, если включена в настройках
     let fiscalNumber: string | null = null;
@@ -557,8 +566,8 @@ export const createOrder = createServerFn({ method: "POST" })
     try {
       const { fiscalize } = await import("@/lib/kaspi.server");
       const res = await fiscalize(db, {
-        orderId: String(order.id),
-        orderNo: Number(order.daily_no ?? order.order_no),
+        orderId: receipt.orderId,
+        orderNo: receipt.dailyNo,
         amount: total,
         method: data.paymentMethod,
         cashAmount,
@@ -570,46 +579,10 @@ export const createOrder = createServerFn({ method: "POST" })
       // Печать чеков не должна зависеть от терминала
     }
 
-    await logAction(cashier, "order_created", "order", String(order.id), {
-      daily_no: order.daily_no,
-      total,
-    });
-
-    return {
-      ok: true,
-      receipt: {
-        orderId: String(order.id),
-        orderNo: Number(order.order_no),
-        dailyNo: Number(order.daily_no ?? 0),
-        createdAt: String(order.created_at),
-        status: "open",
-        orderType: data.orderType,
-        cashierName: cashier.name,
-        customerName: data.customerName || null,
-        customerPhone: phone || null,
-        note: data.note || null,
-        items,
-        subtotal,
-        discount: discount + bonusUsed,
-        total,
-        paymentMethod: data.paymentMethod,
-        cashAmount,
-        cardAmount,
-        cashReceived,
-        changeGiven,
-        bonusEarned,
-        bonusUsed,
-        fiscalNumber,
-        fiscalCheckUrl,
-        shop: {
-          name: String(settings?.shop_name ?? "Гриль & Донер"),
-          address: String(settings?.address ?? ""),
-          phone: String(settings?.phone ?? ""),
-          footer: String(settings?.receipt_footer ?? ""),
-          vatPercent: Number(settings?.vat_percent ?? 0),
-        },
-      },
-    };
+    receipt.fiscalNumber = fiscalNumber;
+    receipt.fiscalCheckUrl = fiscalCheckUrl;
+    await db.from("orders").update({ client_receipt: receipt }).eq("id", receipt.orderId);
+    return { ok: true, receipt };
   });
 
 /** Заказы за сегодня с позициями — для экрана статусов. */
