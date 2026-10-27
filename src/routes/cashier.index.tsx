@@ -406,7 +406,7 @@ function CashierPos() {
     <Dialog open={queueOpen} onOpenChange={setQueueOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Офлайн-заказы · {queued.length}</DialogTitle></DialogHeader>
       {queued.length === 0 ? <p className="text-muted-foreground">Все заказы отправлены</p> : queued.map((q) => <div key={q.localId} className="border-b border-border py-3"><div className="flex justify-between gap-2 font-semibold"><span>О-{q.localNo}</span><span>{formatKzt(q.payload.expectedTotal ?? 0)}</span></div><p className="mt-1 text-xs text-muted-foreground">{new Date(q.createdAt).toLocaleString("ru-RU")}</p><p className={`mt-2 text-sm ${q.error ? "text-destructive" : "text-muted-foreground"}`}>{q.error || "Ожидает отправки"}</p></div>)}
       <Button disabled={syncBusy || !online || !queued.length} onClick={() => retrySync.current()}><RefreshCw className="size-4" />{syncBusy ? "Отправка…" : "Отправить сейчас"}</Button>
-    </Dialog>
+    </DialogContent></Dialog>
   </>;
 
   const printCashier = settings?.["print_cashier_receipt"] !== false;
