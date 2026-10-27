@@ -8,6 +8,13 @@
       "when": 1792828549410,
       "tag": "0000_correct_order_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793075901422,
+      "tag": "0001_cashier_order_idempotency",
+      "breakpoints": true
     }
   ]
 }
