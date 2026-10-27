@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { enqueueOrder, getQueue, isNetworkError, loadCatalog, removeQueued, saveCatalog, type QueuedOrder } from "@/lib/offline-queue";
+import { enqueueOrder, getQueue, isNetworkError, loadCatalog, markQueueError, removeQueued, saveCashier, saveCatalog, type QueuedOrder } from "@/lib/offline-queue";
 import type { CreateOrderInputLike } from "@/lib/offline-types";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,9 @@ import {
   Search,
   Trash2,
   Wallet,
+  Wifi,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -105,6 +108,7 @@ function CashierPos() {
 
   const pos = useQuery({
     queryKey: ["cashier", "pos-data"],
+    networkMode: "always",
     queryFn: async () => {
       try {
         const d = await load();
@@ -140,6 +144,13 @@ function CashierPos() {
   const [receipt, setReceipt] = useState<ReceiptPayload | null>(null);
   const [weightProduct, setWeightProduct] = useState<Row | null>(null);
   const [weightGrams, setWeightGrams] = useState(0);
+  const [online, setOnline] = useState(true);
+  const [queued, setQueued] = useState<QueuedOrder[]>([]);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
+  const syncing = useRef(false);
+  const payInFlight = useRef(false);
+  const retrySync = useRef<() => void>(() => {});
 
   const data = pos.data;
   const products = (data?.products ?? []) as Row[];
@@ -232,6 +243,9 @@ function CashierPos() {
 
   function buildPayload(): CreateOrderInputLike {
     return {
+      clientOrderId: crypto.randomUUID(),
+      shiftId: s(shift?.["id"]), employeeId: s(cashier.data?.id),
+      soldAt: new Date().toISOString(), expectedTotal: total,
       lines: lines.map((l) => ({
         productId: l.productId,
         qty: l.qty,
@@ -255,6 +269,7 @@ function CashierPos() {
     const cashAmount = p.paymentMethod === "card" ? 0 : total - (p.paymentMethod === "mixed" ? p.cardAmount : 0);
     return {
       orderId: q.localId,
+      offlineNo: q.localNo,
       orderNo: q.localNo,
       dailyNo: q.localNo,
       createdAt: q.createdAt,
@@ -302,17 +317,25 @@ function CashierPos() {
   }
 
   const payM = useMutation({
+    networkMode: "always",
     mutationFn: async () => {
       const payload = buildPayload();
-      if (typeof navigator !== "undefined" && !navigator.onLine) {
-        return { offline: true as const, payload };
-      }
+      if (!shift || Date.now() - Date.parse(s(shift["opened_at"])) >= 86_400_000)
+        throw new Error("Смена истекла — продажи недоступны");
+      if (!online && bonus > 0) throw new Error("Без связи списание бонусов недоступно");
+      payInFlight.current = true;
       try {
-        return { offline: false as const, res: await submit({ data: payload as never }) };
+        const q = enqueueOrder(payload);
+        if (!navigator.onLine) return { offline: true as const, payload: q.payload };
+        const res = await submit({ data: q.payload });
+        removeQueued(q.localId);
+        return { offline: false as const, res };
       } catch (e) {
-        if (isNetworkError(e)) return { offline: true as const, payload };
+        if (isNetworkError(e)) { setOnline(false); return { offline: true as const, payload }; }
+        if (getQueue().some((q) => q.localId === payload.clientOrderId))
+          markQueueError(payload.clientOrderId ?? "", e instanceof Error ? e.message : String(e));
         throw e;
-      }
+      } finally { payInFlight.current = false; }
     },
     onSuccess: (r) => {
       if (r.offline) { saveOffline(r.payload); return; }
@@ -327,52 +350,64 @@ function CashierPos() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Отправка офлайн-заказов при появлении связи
-  const [online, setOnline] = useState(true);
-  const [queued, setQueued] = useState(0);
-  const syncing = useRef(false);
   useEffect(() => {
-    const refresh = () => { setQueued(getQueue().length); setOnline(navigator.onLine); };
+    let disposed = false;
+    const refresh = () => { if (!disposed) setQueued(getQueue()); };
     async function sync() {
       refresh();
-      if (syncing.current || !navigator.onLine) return;
+      if (syncing.current || payInFlight.current || !navigator.onLine) return;
       syncing.current = true;
+      if (!disposed) setSyncBusy(true);
       let sent = 0;
       try {
         for (const q of getQueue()) {
           try {
-            const res = await submit({ data: q.payload as never });
-            if (res.ok) sent++;
-            else toast.error(`Офлайн-заказ О-${q.localNo} отклонён: ${res.message}`);
-            removeQueued(q.localId);
+            if (!q.payload.clientOrderId || !q.payload.shiftId || !q.payload.employeeId) {
+              markQueueError(q.localId, "Старый офлайн-заказ: требуется разбор администратором"); continue;
+            }
+            const res = await submit({ data: q.payload });
+            if (!disposed) setOnline(true);
+            if (res.ok) { sent++; removeQueued(q.localId); }
+            else markQueueError(q.localId, res.message);
           } catch (e) {
-            if (isNetworkError(e)) break;
-            toast.error(`Офлайн-заказ О-${q.localNo}: ${(e as Error).message}`);
-            break;
+            if (isNetworkError(e)) { if (!disposed) setOnline(false); break; }
+            markQueueError(q.localId, e instanceof Error ? e.message : String(e)); break;
           }
         }
       } finally {
         syncing.current = false;
+        if (!disposed) setSyncBusy(false);
         refresh();
       }
-      if (sent) {
-        toast.success(`Отправлено офлайн-заказов: ${sent}`);
-        qc.invalidateQueries({ queryKey: ["cashier"] });
-      }
+      if (sent) { toast.success(`Отправлено офлайн-заказов: ${sent}`); qc.invalidateQueries({ queryKey: ["cashier"] }); }
     }
-    refresh();
-    void sync();
-    const t = setInterval(() => void sync(), 20_000);
-    window.addEventListener("online", sync);
-    window.addEventListener("offline", refresh);
+    retrySync.current = () => { void sync(); void pos.refetch().then((r) => { if (!disposed && !r.isError && navigator.onLine) setOnline(true); }); };
+    const connectionChanged = () => { setOnline(navigator.onLine); if (navigator.onLine) retrySync.current(); };
+    setOnline(navigator.onLine); refresh(); void sync();
+    const timer = setInterval(() => void sync(), 20_000);
+    window.addEventListener("online", connectionChanged);
+    window.addEventListener("offline", connectionChanged);
     window.addEventListener("pos-queue-changed", refresh);
     return () => {
-      clearInterval(t);
-      window.removeEventListener("online", sync);
-      window.removeEventListener("offline", refresh);
+      disposed = true; clearInterval(timer);
+      window.removeEventListener("online", connectionChanged);
+      window.removeEventListener("offline", connectionChanged);
       window.removeEventListener("pos-queue-changed", refresh);
     };
   }, [submit, qc]);
+
+  const queueStatus = <>
+    <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted px-4 py-2 text-sm print:hidden">
+      {online ? <Wifi className="size-4 text-accent" /> : <WifiOff className="size-4 text-primary" />}
+      <span>{online ? "Есть связь" : "Нет связи · офлайн"}</span>
+      {queued.length > 0 && <Button variant="link" size="sm" className="h-auto whitespace-normal p-0" onClick={() => setQueueOpen(true)}>Ожидают отправки: {queued.length}{queued.some((q) => q.error) ? " · требуется проверка" : ""}</Button>}
+      <Button variant="ghost" size="icon" className="ml-auto size-8" aria-label="Повторить отправку" title="Повторить отправку" disabled={syncBusy || !online} onClick={() => retrySync.current()}><RefreshCw className={`size-4 ${syncBusy ? "animate-spin motion-reduce:animate-none" : ""}`} /></Button>
+    </div>
+    <Dialog open={queueOpen} onOpenChange={setQueueOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Офлайн-заказы · {queued.length}</DialogTitle></DialogHeader>
+      {queued.length === 0 ? <p className="text-muted-foreground">Все заказы отправлены</p> : queued.map((q) => <div key={q.localId} className="border-b border-border py-3"><div className="flex justify-between gap-2 font-semibold"><span>О-{q.localNo}</span><span>{formatKzt(q.payload.expectedTotal ?? 0)}</span></div><p className="mt-1 text-xs text-muted-foreground">{new Date(q.createdAt).toLocaleString("ru-RU")}</p><p className={`mt-2 text-sm ${q.error ? "text-destructive" : "text-muted-foreground"}`}>{q.error || "Ожидает отправки"}</p></div>)}
+      <Button disabled={syncBusy || !online || !queued.length} onClick={() => retrySync.current()}><RefreshCw className="size-4" />{syncBusy ? "Отправка…" : "Отправить сейчас"}</Button>
+    </DialogContent></Dialog>
+  </>;
 
   const printCashier = settings?.["print_cashier_receipt"] !== false;
   const printCustomer = settings?.["print_customer_receipt"] !== false;
@@ -384,6 +419,7 @@ function CashierPos() {
   if (receipt) {
     return (
       <main className="min-h-screen bg-muted p-4">
+        {queueStatus}
         <div id="receipt-print">
           <ReceiptPair r={receipt} cashier={printCashier} customer={printCustomer} />
         </div>
@@ -431,6 +467,7 @@ function CashierPos() {
             title="Выйти из кассы"
             onClick={async () => {
               await logout();
+              saveCashier(null);
               qc.clear();
               window.location.href = "/cashier/login";
             }}
@@ -439,6 +476,7 @@ function CashierPos() {
           </Button>
         </div>
       </header>
+      {queueStatus}
 
       {!shift && (
         <div className="flex shrink-0 flex-wrap items-center gap-3 bg-destructive/10 px-4 py-3 text-sm">
@@ -638,7 +676,7 @@ function CashierPos() {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+7…"
               />
-              <Button variant="secondary" onClick={() => findM.mutate()}>
+              <Button variant="secondary" disabled={!online} onClick={() => findM.mutate()}>
                 Найти
               </Button>
             </div>
@@ -650,6 +688,7 @@ function CashierPos() {
                     size="sm"
                     variant="link"
                     className="h-auto p-0 pl-2"
+                    disabled={!online}
                     onClick={() => setBonusUsed(bonus > 0 ? 0 : maxBonus)}
                   >
                     {bonus > 0 ? "не списывать" : `списать ${maxBonus}`}
@@ -865,7 +904,7 @@ function CashierPos() {
             />
           )}
 
-          <Button size="lg" disabled={payM.isPending} onClick={() => payM.mutate()}>
+          <Button size="lg" disabled={payM.isPending || syncBusy || (method !== "card" && cashReceived < total - (method === "mixed" ? cardAmount : 0)) || cardAmount > total} onClick={() => payM.mutate()}>
             Провести оплату
           </Button>
         </DialogContent>

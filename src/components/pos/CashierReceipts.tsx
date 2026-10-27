@@ -40,8 +40,9 @@ export function CashierReceipt({ r }: { r: ReceiptPayload }) {
   return (
     <div className={sheet}>
       <div className="text-center text-sm font-bold uppercase">Чек кассира</div>
-      <div className="text-center text-3xl font-bold">№ {r.dailyNo}</div>
+      <div className="text-center text-3xl font-bold">№ {r.offlineNo ? `О-${r.offlineNo}` : r.dailyNo}</div>
       <div className="text-center">{ORDER_TYPE_LABELS[r.orderType] ?? r.orderType}</div>
+      {r.offlineNo ? <div className="text-center font-bold">ОФЛАЙН · НЕФИСКАЛЬНЫЙ ЧЕК</div> : null}
       <Divider />
       <div className="flex justify-between">
         <span>Смена-чек {r.orderNo}</span>
@@ -51,6 +52,7 @@ export function CashierReceipt({ r }: { r: ReceiptPayload }) {
       {r.customerName ? <div>Клиент: {r.customerName}</div> : null}
       {r.customerPhone ? <div>Телефон: {r.customerPhone}</div> : null}
       {r.status === "cancelled" ? <div className="font-bold">*** ОТМЕНЁН ***</div> : null}
+      {r.offlineNo ? <div className="text-center font-bold">ОФЛАЙН · НЕФИСКАЛЬНЫЙ ЧЕК</div> : null}
       <Divider />
       {r.items.map((l, i) => (
         <div key={i} className="mb-1">
@@ -107,7 +109,7 @@ export function CustomerReceipt({ r }: { r: ReceiptPayload }) {
     <div className={sheet}>
       <div className="text-center text-sm font-bold uppercase">{r.shop.name}</div>
       <div className="mt-1 text-center">Ваш номер заказа</div>
-      <div className="text-center text-5xl font-bold leading-tight">{r.dailyNo}</div>
+      <div className="text-center text-5xl font-bold leading-tight">{r.offlineNo ? `О-${r.offlineNo}` : r.dailyNo}</div>
       <Divider />
       {r.items.map((l, i) => (
         <div key={i} className="flex justify-between">

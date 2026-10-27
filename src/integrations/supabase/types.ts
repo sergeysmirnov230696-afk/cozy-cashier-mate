@@ -320,6 +320,8 @@ export type Database = {
           cash_amount: number
           cash_received: number
           change_given: number
+          client_order_id: string | null
+          client_receipt: Json | null
           completed_at: string | null
           created_at: string
           created_by: string | null
@@ -354,6 +356,8 @@ export type Database = {
           cash_amount?: number
           cash_received?: number
           change_given?: number
+          client_order_id?: string | null
+          client_receipt?: Json | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -388,6 +392,8 @@ export type Database = {
           cash_amount?: number
           cash_received?: number
           change_given?: number
+          client_order_id?: string | null
+          client_receipt?: Json | null
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
@@ -684,6 +690,17 @@ export type Database = {
     }
     Functions: {
       close_expired_shifts: { Args: never; Returns: number }
+      commit_cashier_sale: {
+        Args: {
+          p_customer: Json
+          p_items: Json
+          p_key: string
+          p_order: Json
+          p_receipt: Json
+          p_stock: Json
+        }
+        Returns: Json
+      }
       correct_order_payment: {
         Args: {
           p_card: number
@@ -702,6 +719,8 @@ export type Database = {
           cash_amount: number
           cash_received: number
           change_given: number
+          client_order_id: string | null
+          client_receipt: Json | null
           completed_at: string | null
           created_at: string
           created_by: string | null
