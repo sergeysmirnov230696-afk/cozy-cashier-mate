@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Complete offline sales, connection/queue status, duplicate protection, and offline-to-online verification.
 - [x] Add arbitrary inclusive date selection to admin reports and receipt history; date rules covered by tests, build and typecheck pass.
 - [x] Fix admin sales and shift accounting; six calculation tests pass.
 - [x] Add transactional, role-checked payment correction with audit and shift recalculation.
