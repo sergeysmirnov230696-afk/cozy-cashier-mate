@@ -15,6 +15,7 @@ export function useCashier() {
   const me = useServerFn(cashierMe);
   const query = useQuery({
     queryKey: ["cashier", "me"],
+    networkMode: "always",
     queryFn: async () => {
       try {
         const cashier = await me();

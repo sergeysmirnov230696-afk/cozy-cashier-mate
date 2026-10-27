@@ -108,6 +108,7 @@ function CashierPos() {
 
   const pos = useQuery({
     queryKey: ["cashier", "pos-data"],
+    networkMode: "always",
     queryFn: async () => {
       try {
         const d = await load();
@@ -316,6 +317,7 @@ function CashierPos() {
   }
 
   const payM = useMutation({
+    networkMode: "always",
     mutationFn: async () => {
       const payload = buildPayload();
       if (!shift || Date.now() - Date.parse(s(shift["opened_at"])) >= 86_400_000)
