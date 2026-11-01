@@ -185,19 +185,21 @@ function OrdersPage() {
                       ) : o.status === "open" ? (
                         <span className="text-primary">Открыт</span>
                       ) : (
-                        <span className="text-secondary">Выполнен</span>
+                        <span className="text-accent">Выполнен</span>
                       )}
                     </td>
                     <td className="p-3">
                       <div className="flex justify-end gap-2">
                         {isSale(o.status) && <Button size="sm" variant="secondary" title="Изменить способ оплаты" aria-label={`Изменить оплату чека №${o.order_no}`} onClick={() => setPaymentOrder(o)}><Pencil className="size-4" /></Button>}
-                        <Button size="sm" variant="secondary" onClick={() => openReceipt.mutate(o)}>
+                        <Button size="sm" variant="secondary" title="Открыть чек для печати" aria-label={`Печать чека №${o.order_no}`} onClick={() => openReceipt.mutate(o)}>
                           <Printer className="size-4" />
                         </Button>
                         {o.status !== "refunded" && o.status !== "cancelled" && (
                           <Button
                             size="sm"
                             variant="ghost"
+                            title="Оформить возврат"
+                            aria-label={`Возврат по чеку №${o.order_no}`}
                             onClick={() => {
                               if (confirm(`Оформить возврат по чеку №${o.order_no}?`)) refund.mutate(o);
                             }}
