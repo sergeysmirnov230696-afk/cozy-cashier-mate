@@ -9,6 +9,8 @@ import {
 import { formatKzt, PAYMENT_LABELS } from "@/lib/pos";
 import { ReportPeriod, useReportPeriod } from "@/components/pos/ReportPeriod";
 import { isSale } from "@/lib/sales";
+import { Banknote, CreditCard, ReceiptText, TrendingUp, Undo2, Wallet } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
@@ -75,35 +77,35 @@ function Reports() {
 
       {(orders.isError || items.isError || employees.isError) && <p role="alert" className="text-destructive">Не удалось загрузить отчёт. {orders.error?.message ?? items.error?.message ?? employees.error?.message}</p>}
       {(orders.isPending || items.isPending) && <p className="text-muted-foreground">Загрузка отчёта…</p>}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Выручка" value={formatKzt(revenue)} />
-        <Stat label="Чеков" value={String(paid.length)} />
-        <Stat label="Средний чек" value={formatKzt(avg)} />
-        <Stat label="Возвраты и отмены" value={String(refunds.length)} />
-        <Stat label={PAYMENT_LABELS['cash'] ?? "Наличные"} value={formatKzt(cash)} />
-        <Stat label={PAYMENT_LABELS['card'] ?? "Карта"} value={formatKzt(card)} />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <Stat label="Выручка" value={formatKzt(revenue)} icon={TrendingUp} prominent />
+        <Stat label="Чеков" value={String(paid.length)} icon={ReceiptText} />
+        <Stat label="Средний чек" value={formatKzt(avg)} icon={Wallet} />
+        <Stat label={PAYMENT_LABELS['cash'] ?? "Наличные"} value={formatKzt(cash)} icon={Banknote} />
+        <Stat label={PAYMENT_LABELS['card'] ?? "Карта"} value={formatKzt(card)} icon={CreditCard} />
+        <Stat label="Возвраты и отмены" value={String(refunds.length)} icon={Undo2} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Топ товаров">
           {top.length === 0 && <Empty />}
           {top.map((t) => (
-            <div key={t.name} className="flex justify-between border-b border-border py-2 text-sm">
-              <span>
+            <div key={t.name} className="flex items-center justify-between gap-4 border-b border-border py-3 text-sm">
+              <span className="min-w-0 break-words">
                 {t.name} <span className="text-muted-foreground">× {t.qty}</span>
               </span>
-              <span className="font-semibold">{formatKzt(t.sum)}</span>
+              <span className="shrink-0 font-semibold tnum">{formatKzt(t.sum)}</span>
             </div>
           ))}
         </Panel>
         <Panel title="По кассирам">
           {byCashier.length === 0 && <Empty />}
           {byCashier.map((c) => (
-            <div key={c.name} className="flex justify-between border-b border-border py-2 text-sm">
-              <span>
+            <div key={c.name} className="flex items-center justify-between gap-4 border-b border-border py-3 text-sm">
+              <span className="min-w-0 break-words">
                 {c.name} <span className="text-muted-foreground">· {c.count} чек(ов)</span>
               </span>
-              <span className="font-semibold">{formatKzt(c.sum)}</span>
+              <span className="shrink-0 font-semibold tnum">{formatKzt(c.sum)}</span>
             </div>
           ))}
         </Panel>
@@ -112,19 +114,19 @@ function Reports() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, icon: Icon, prominent }: { label: string; value: string; icon: LucideIcon; prominent?: boolean }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
+    <div className={`min-w-0 rounded-lg border bg-card p-5 ${prominent ? "border-primary/50" : "border-border"}`}>
+      <div className="flex items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{label}</p><Icon className={`size-5 shrink-0 ${prominent ? "text-primary" : "text-accent"}`} /></div>
+      <p className={`mt-4 break-words text-2xl font-extrabold tnum ${prominent ? "text-primary" : "text-foreground"}`}>{value}</p>
     </div>
   );
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
-      <h2 className="mb-2 text-lg font-semibold">{title}</h2>
+    <section className="min-w-0 border-t border-border pt-5">
+      <h2 className="mb-4 text-lg font-bold">{title}</h2>
       {children}
     </section>
   );

@@ -1,4 +1,6 @@
 # Tasks
+- [x] Refresh dark tokens, shared controls, admin navigation and report layout; public desktop/mobile checks and 14 regression tests pass.
+- [ ] Verify refreshed admin and cashier workspaces signed in: no matching user account is available for preview session minting.
 - [ ] Complete offline sales, connection/queue status, duplicate protection, and offline-to-online verification.
 - [x] Add arbitrary inclusive date selection to admin reports and receipt history; date rules covered by tests, build and typecheck pass.
 - [x] Fix admin sales and shift accounting; six calculation tests pass.

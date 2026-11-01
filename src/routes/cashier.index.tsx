@@ -444,12 +444,12 @@ function CashierPos() {
 
   return (
     <main className="min-h-dvh bg-background lg:flex lg:h-dvh lg:min-h-0 lg:flex-col lg:overflow-hidden">
-      <header className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3 lg:px-6">
+      <header className="grid shrink-0 grid-cols-1 items-center gap-3 border-b border-border bg-card px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:px-6">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-xl font-bold">Касса</h1>
           <span className="truncate text-sm text-muted-foreground">{cashier.data?.name}</span>
         </div>
-        <div className="flex shrink-0 gap-1 sm:gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link to="/cashier/orders">
               <ClipboardList className="size-4" /> Заказы
@@ -557,7 +557,7 @@ function CashierPos() {
           </div>
         </section>
 
-        <aside aria-label="Текущий заказ" className="flex min-h-0 min-w-0 flex-col border border-border bg-card lg:overflow-hidden">
+        <aside aria-label="Текущий заказ" className="flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card lg:overflow-hidden">
           <h2 className="shrink-0 border-b border-border px-4 py-3 text-lg font-semibold">Чек <span className="ml-2 text-sm font-normal text-muted-foreground">{lines.length} поз.</span></h2>
           <div className="min-h-0 flex-1 p-4 lg:overflow-y-auto lg:overscroll-contain">
           <div className="grid gap-2">

@@ -79,14 +79,15 @@ function CashierLogin() {
           {list.map((c) => {
             const locked = c.lockedUntil && new Date(c.lockedUntil).getTime() > Date.now();
             return (
-              <button
+              <Button
                 key={c.id}
+                variant="outline"
                 disabled={!!locked}
                 onClick={() => {
                   setSelected(c.id);
                   setPin("");
                 }}
-                className={`tile-press flex items-center gap-3 rounded-xl border px-4 py-3 text-left ${
+                className={`tile-press h-auto min-h-14 w-full justify-start whitespace-normal px-4 py-3 text-left ${
                   selected === c.id ? "border-primary bg-primary/10" : "border-border bg-card"
                 } ${locked ? "opacity-40" : ""}`}
               >
@@ -99,7 +100,7 @@ function CashierLogin() {
                 <span className="ml-auto text-xs text-muted-foreground">
                   {locked ? "заблокирован" : (ROLE_LABELS[c.role] ?? c.role)}
                 </span>
-              </button>
+              </Button>
             );
           })}
           {cashiers.isLoading && (
@@ -114,7 +115,8 @@ function CashierLogin() {
           type="password"
           placeholder="PIN"
           disabled={!active}
-          className="mt-4 text-center text-2xl tracking-[0.5em]"
+          aria-label="PIN-код"
+          className="mt-4 h-14 text-center text-2xl"
         />
         <div className="mt-3 grid grid-cols-3 gap-2">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "←"].map((k) => (

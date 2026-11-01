@@ -21,8 +21,8 @@ export function ReportPeriod({ selection }: { selection: ReturnType<typeof useRe
   const [start, setStart] = useState(() => new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 10));
   const [end, setEnd] = useState(start);
   const [error, setError] = useState("");
-  return <div className="space-y-3">
-    <div className="flex flex-wrap gap-2">
+  return <div className="space-y-3 border-b border-border pb-5">
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Период отчёта">
       {([["today", "Сегодня"], ["week", "7 дней"], ["month", "30 дней"]] as const).map(([key, label]) =>
         <Button key={key} size="sm" variant={selection.period === key ? "default" : "secondary"} onClick={() => { selection.setPeriod(key); setError(""); }}>{label}</Button>)}
       <Button size="sm" variant={selection.period === "custom" ? "default" : "secondary"} onClick={() => selection.setPeriod("custom")}><CalendarDays className="size-4" />Любой период</Button>

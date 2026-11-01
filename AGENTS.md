@@ -11,6 +11,7 @@
 
 - The cashier desktop workspace uses viewport-height grid tracks with separate catalogue and order-body scrolling; keep totals and payment outside the scrolling body so checkout stays visible.
 - Both root and dark selectors share the same semantic palette to keep device themes consistent.
+- Shared control variants and global semantic tokens define contrast and interaction states; the admin layout owns responsive navigation so leaf pages stay consistent without duplicating shells.
 - Use shared sales accounting for admin reports: paid open/completed and legacy paid orders are sales; cancelled/refunded orders are excluded, and date ranges follow the shop's Almaty business day.
 - Correct receipt payment splits through a role-checked transactional database function so the order, closed-shift cash totals, and audit record change together.
 - Share the date-period control between admin sales reports and receipt history; custom ranges include both selected dates and use the same business-day conversion as presets.

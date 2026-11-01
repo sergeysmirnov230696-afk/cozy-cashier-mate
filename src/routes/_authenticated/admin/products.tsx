@@ -227,15 +227,15 @@ function ProductsPage() {
                   ) : p.in_stop_list ? (
                     <span className="text-destructive">Стоп-лист</span>
                   ) : (
-                    <span className="text-secondary">В продаже</span>
+                    <span className="text-accent">В продаже</span>
                   )}
                 </td>
                 <td className="p-3">
                   <div className="flex justify-end gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setDraft(toDraft(p))}>
+                    <Button size="icon" variant="secondary" title="Редактировать товар" aria-label={`Редактировать ${p.name}`} onClick={() => setDraft(toDraft(p))}>
                       <Pencil className="size-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove.mutate(p.id)}>
+                    <Button size="icon" variant="outline" title="Удалить товар" aria-label={`Удалить ${p.name}`} className="text-destructive" onClick={() => remove.mutate(p.id)}>
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
