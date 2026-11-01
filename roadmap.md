@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Refresh the dark interface, improve button visibility and navigation, and verify layouts without changing sales logic.
 - [ ] Complete offline sales, connection/queue status, duplicate protection, and offline-to-online verification.
 - [x] Add arbitrary inclusive date selection to admin reports and receipt history; date rules covered by tests, build and typecheck pass.
 - [x] Fix admin sales and shift accounting; six calculation tests pass.
