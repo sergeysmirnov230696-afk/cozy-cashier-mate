@@ -155,7 +155,7 @@ function StockPage() {
             <div key={m.id} className="border-b border-border py-2 text-sm last:border-0">
               <div className="flex justify-between">
                 <span>{productName(m.product_id)}</span>
-                <span className={Number(m.qty) < 0 ? "text-destructive" : "text-secondary"}>
+                <span className={Number(m.qty) < 0 ? "text-destructive" : "text-accent"}>
                   {Number(m.qty) > 0 ? "+" : ""}
                   {m.qty}
                 </span>

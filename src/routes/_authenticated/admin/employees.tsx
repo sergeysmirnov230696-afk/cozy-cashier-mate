@@ -115,7 +115,7 @@ function EmployeesPage() {
                 <td className="p-3 tracking-widest">{e.pin}</td>
                 <td className="p-3">
                   {e.is_active ? (
-                    <span className="text-secondary">Активен</span>
+                    <span className="text-accent">Активен</span>
                   ) : (
                     <span className="text-muted-foreground">Отключён</span>
                   )}
@@ -124,7 +124,9 @@ function EmployeesPage() {
                   <div className="flex justify-end gap-1">
                     <Button
                       size="icon"
-                      variant="ghost"
+                      variant="secondary"
+                      title="Редактировать сотрудника"
+                      aria-label={`Редактировать ${e.name}`}
                       onClick={() =>
                         setDraft({
                           id: e.id,
