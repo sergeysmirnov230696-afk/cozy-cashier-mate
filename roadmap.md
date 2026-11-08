@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Add cashier chicken batches: raw weight, roast completion, stripped meat, losses and yield; verify calculations and saved flow.
 - [x] Refresh dark tokens, shared controls, admin navigation and report layout; public desktop/mobile checks and 14 regression tests pass.
 - [ ] Verify refreshed admin and cashier workspaces signed in: no matching user account is available for preview session minting.
 - [ ] Complete offline sales, connection/queue status, duplicate protection, and offline-to-online verification.
