@@ -124,6 +124,73 @@ export type Database = {
         }
         Relationships: []
       }
+      chicken_batches: {
+        Row: {
+          employee_id: string | null
+          employee_name: string
+          id: string
+          meat_grams: number | null
+          note: string
+          raw_grams: number
+          roasted_at: string | null
+          roasted_by: string | null
+          roasted_grams: number | null
+          started_at: string
+          stripped_at: string | null
+          stripped_by: string | null
+        }
+        Insert: {
+          employee_id?: string | null
+          employee_name: string
+          id?: string
+          meat_grams?: number | null
+          note?: string
+          raw_grams: number
+          roasted_at?: string | null
+          roasted_by?: string | null
+          roasted_grams?: number | null
+          started_at?: string
+          stripped_at?: string | null
+          stripped_by?: string | null
+        }
+        Update: {
+          employee_id?: string | null
+          employee_name?: string
+          id?: string
+          meat_grams?: number | null
+          note?: string
+          raw_grams?: number
+          roasted_at?: string | null
+          roasted_by?: string | null
+          roasted_grams?: number | null
+          started_at?: string
+          stripped_at?: string | null
+          stripped_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chicken_batches_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chicken_batches_roasted_by_fkey"
+            columns: ["roasted_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chicken_batches_stripped_by_fkey"
+            columns: ["stripped_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           bonus: number
