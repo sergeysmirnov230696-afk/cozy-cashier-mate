@@ -18,3 +18,4 @@
 
 - Persist cashier payment requests before transmission with a stable UUID; commit orders, items, stock, loyalty and audit atomically through the service-only sale RPC. Retain rejected queued sales with their original employee, shift and expected total.
 - Cached cashier identity only enables the offline view within the session lifetime; every upload authenticates through the server PIN session. Offline receipts are provisional, not fiscal.
+- Chicken preparation uses integer-gram batches in a separate module, accessed only through PIN-session-checked server functions; conditional stage updates and database constraints prevent concurrent overwrites and impossible weights.
