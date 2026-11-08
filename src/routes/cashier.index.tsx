@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   ClipboardList,
+  Flame,
   LogOut,
   Minus,
   Plus,
@@ -450,6 +451,9 @@ function CashierPos() {
           <span className="truncate text-sm text-muted-foreground">{cashier.data?.name}</span>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
+          <Button asChild size="sm" variant="secondary">
+            <Link to="/cashier/chicken"><Flame className="size-4" /> Жарка и разбор</Link>
+          </Button>
           <Button asChild size="sm" variant="secondary">
             <Link to="/cashier/orders">
               <ClipboardList className="size-4" /> Заказы
