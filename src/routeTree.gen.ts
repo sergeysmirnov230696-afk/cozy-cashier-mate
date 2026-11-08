@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as CashierIndexRouteImport } from './routes/cashier.index'
+import { Route as CashierChickenRouteImport } from './routes/cashier.chicken'
 import { Route as CashierLoginRouteImport } from './routes/cashier.login'
 import { Route as CashierOrdersRouteImport } from './routes/cashier.orders'
 import { Route as CashierShiftRouteImport } from './routes/cashier.shift'
@@ -54,6 +55,11 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
 const CashierIndexRoute = CashierIndexRouteImport.update({
   id: '/cashier/',
   path: '/cashier/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashierChickenRoute = CashierChickenRouteImport.update({
+  id: '/cashier/chicken',
+  path: '/cashier/chicken',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CashierLoginRoute = CashierLoginRouteImport.update({
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/display': typeof DisplayRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/cashier/chicken': typeof CashierChickenRoute
   '/cashier/login': typeof CashierLoginRoute
   '/cashier/orders': typeof CashierOrdersRoute
   '/cashier/shift': typeof CashierShiftRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/display': typeof DisplayRoute
+  '/cashier/chicken': typeof CashierChickenRoute
   '/cashier/login': typeof CashierLoginRoute
   '/cashier/orders': typeof CashierOrdersRoute
   '/cashier/shift': typeof CashierShiftRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/display': typeof DisplayRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/cashier/chicken': typeof CashierChickenRoute
   '/cashier/login': typeof CashierLoginRoute
   '/cashier/orders': typeof CashierOrdersRoute
   '/cashier/shift': typeof CashierShiftRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/display'
     | '/admin'
+    | '/cashier/chicken'
     | '/cashier/login'
     | '/cashier/orders'
     | '/cashier/shift'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/display'
+    | '/cashier/chicken'
     | '/cashier/login'
     | '/cashier/orders'
     | '/cashier/shift'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/display'
     | '/_authenticated/admin'
+    | '/cashier/chicken'
     | '/cashier/login'
     | '/cashier/orders'
     | '/cashier/shift'
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DisplayRoute: typeof DisplayRoute
+  CashierChickenRoute: typeof CashierChickenRoute
   CashierLoginRoute: typeof CashierLoginRoute
   CashierOrdersRoute: typeof CashierOrdersRoute
   CashierShiftRoute: typeof CashierShiftRoute
@@ -282,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/cashier'
       fullPath: '/cashier/'
       preLoaderRoute: typeof CashierIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cashier/chicken': {
+      id: '/cashier/chicken'
+      path: '/cashier/chicken'
+      fullPath: '/cashier/chicken'
+      preLoaderRoute: typeof CashierChickenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cashier/login': {
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DisplayRoute: DisplayRoute,
+  CashierChickenRoute: CashierChickenRoute,
   CashierLoginRoute: CashierLoginRoute,
   CashierOrdersRoute: CashierOrdersRoute,
   CashierShiftRoute: CashierShiftRoute,
