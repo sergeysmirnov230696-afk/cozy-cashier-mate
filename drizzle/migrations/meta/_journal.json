@@ -22,6 +22,13 @@
       "when": 1794167911068,
       "tag": "0002_chicken_preparation_batches",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794391625253,
+      "tag": "0003_product_images_policies",
+      "breakpoints": true
     }
   ]
 }

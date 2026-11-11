@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ImagePlus, Pencil, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { categoriesQuery, productsQuery, type Product } from "@/lib/pos-queries";
 import { formatKzt } from "@/lib/pos";
@@ -54,6 +54,7 @@ type Draft = {
   in_stop_list: boolean;
   track_stock: boolean;
   sort: string;
+  image_url: string | null;
 };
 
 const EMPTY: Draft = {
@@ -67,6 +68,7 @@ const EMPTY: Draft = {
   in_stop_list: false,
   track_stock: false,
   sort: "0",
+  image_url: null,
 };
 
 function toDraft(p: Product): Draft {
@@ -82,6 +84,7 @@ function toDraft(p: Product): Draft {
     in_stop_list: p.in_stop_list,
     track_stock: p.track_stock,
     sort: String(p.sort),
+    image_url: p.image_url,
   };
 }
 
@@ -106,6 +109,7 @@ function ProductsPage() {
         in_stop_list: d.in_stop_list,
         track_stock: d.track_stock,
         sort: Math.round(Number(d.sort) || 0),
+        image_url: d.image_url,
       };
       if (!payload.name) throw new Error("Введите название товара");
       const res = d.id
@@ -212,6 +216,7 @@ function ProductsPage() {
             {list.map((p) => (
               <tr key={p.id} className="border-b border-border last:border-0">
                 <td className="p-3 font-medium">
+                  {p.image_url && <img src={p.image_url} alt="" className="mr-2 inline-block size-9 rounded-lg object-cover align-middle" />}
                   {p.emoji ? `${p.emoji} ` : ""}
                   {p.name}
                 </td>
@@ -265,6 +270,29 @@ function ProductsPage() {
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 />
+              </Field>
+              <Field label="Фото">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted text-2xl">
+                    {draft.image_url ? <img src={draft.image_url} alt="" className="size-full object-cover" /> : draft.emoji || "📷"}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button asChild variant="secondary" size="sm">
+                      <label className="cursor-pointer">
+                        <ImagePlus className="size-4" /> {draft.image_url ? "Заменить" : "Загрузить"}
+                        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          const f = e.target.files?.[0]; e.target.value = "";
+                          if (!f) return;
+                          try { const url = await compressImage(f); setDraft((d) => d && { ...d, image_url: url }); }
+                          catch { toast.error("Не удалось загрузить фото"); }
+                        }} />
+                      </label>
+                    </Button>
+                    {draft.image_url && (
+                      <Button variant="outline" size="sm" onClick={() => setDraft({ ...draft, image_url: null })}>Убрать фото</Button>
+                    )}
+                  </div>
+                </div>
               </Field>
               <Field label="Категория">
                 <Select
@@ -376,4 +404,16 @@ function Toggle({
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
+}
+
+async function compressImage(file: File): Promise<string> {
+  const bmp = await createImageBitmap(file);
+  const size = 480;
+  const scale = Math.max(size / bmp.width, size / bmp.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const w = bmp.width * scale, h = bmp.height * scale;
+  ctx.drawImage(bmp, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL("image/jpeg", 0.8);
 }
